@@ -1,0 +1,7 @@
+project_id = "btljyfceqwwqcdlrziza"
+
+[functions.create-user]
+verify_jwt = false
+
+[functions.create-colaborador-account]
+verify_jwt = false
