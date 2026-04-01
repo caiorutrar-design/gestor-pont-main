@@ -8,6 +8,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { useGeolocation } from "@/hooks/useGeolocation";
 import { Clock, CheckCircle2, AlertCircle, Loader2, MapPin, MapPinOff } from "lucide-react";
 import { toast } from "sonner";
+import { usePontoStatus } from "@/hooks/usePontoStatus";
+import { useMyColaborador } from "@/hooks/useMyColaborador";
+import { registrarPontoSchema } from "@/domain/ponto/validators/pontoSchemas";
+import { TipoRegistro } from "@/domain/ponto/types";
 
 const RegistroPontoPage = () => {
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -22,6 +26,8 @@ const RegistroPontoPage = () => {
   } | null>(null);
 
   const geo = useGeolocation();
+  const { data: myColab } = useMyColaborador();
+  const status = usePontoStatus(myColab?.id);
 
   // Request geolocation on mount
   useEffect(() => {
@@ -43,8 +49,16 @@ const RegistroPontoPage = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!matricula.trim() || !senhaPonto.trim()) {
-      toast.error("Preencha matrícula e senha.");
+    // Validação via Schema de Domínio
+    const validation = registrarPontoSchema.safeParse({
+      matricula: matricula.trim(),
+      senha_ponto: senhaPonto.trim(),
+      latitude: geo.latitude,
+      longitude: geo.longitude
+    });
+
+    if (!validation.success) {
+      toast.error(validation.error.issues[0].message);
       return;
     }
 
@@ -79,6 +93,8 @@ const RegistroPontoPage = () => {
         toast.success(data.message);
         setMatricula("");
         setSenhaPonto("");
+        // Atualiza status local se for o próprio colaborador
+        status.refreshStatus();
       }
     } catch {
       setLastResult({ success: false, message: "Erro ao conectar com o servidor." });
@@ -159,14 +175,21 @@ const RegistroPontoPage = () => {
                   autoComplete="off"
                 />
               </div>
-              <Button type="submit" className="w-full" size="lg" disabled={isSubmitting}>
+              <Button 
+                type="submit" 
+                className={`w-full ${status.proximaAcao === TipoRegistro.SAIDA ? "bg-orange-600 hover:bg-orange-700" : "bg-green-600 hover:bg-green-700"}`} 
+                size="lg" 
+                disabled={isSubmitting || !status.podeRegistrar}
+              >
                 {isSubmitting ? (
                   <>
                     <Loader2 className="h-5 w-5 animate-spin mr-2" />
                     Registrando...
                   </>
+                ) : status.cooldown > 0 ? (
+                  `Aguarde ${status.cooldown}s...`
                 ) : (
-                  "Registrar Ponto"
+                  `Registrar ${status.proximaAcao === TipoRegistro.ENTRADA ? "Entrada" : "Saída"}`
                 )}
               </Button>
             </form>

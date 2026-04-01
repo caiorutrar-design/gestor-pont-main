@@ -16,6 +16,10 @@ import {
 } from "lucide-react";
 import { format, startOfMonth, endOfMonth, subMonths, addMonths, parseISO, differenceInMinutes } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { pontoDomainService } from "@/domain/ponto/services/PontoDomainService";
+import { RegistroPonto } from "@/domain/ponto/entities/RegistroPonto";
+import { TipoRegistro } from "@/domain/ponto/types";
+import { usePontoStatus } from "@/hooks/usePontoStatus";
 
 const MeuPontoPage = () => {
   const navigate = useNavigate();
@@ -34,6 +38,7 @@ const MeuPontoPage = () => {
 
   const { data: todayRecords = [], refetch: refetchToday } = useMyRegistrosPonto(colaborador?.id, today);
   const { data: recentRecords = [] } = useMyRegistrosPonto(colaborador?.id);
+  const status = usePontoStatus(colaborador?.id);
 
   // Calendar month records
   const monthStart = format(startOfMonth(calendarMonth), "yyyy-MM-dd");
@@ -76,56 +81,47 @@ const MeuPontoPage = () => {
   const isEntrada = nextTipo === "entrada";
 
   // Calculate today's worked hours dynamically (no fixed target)
-  const todayWorkedMinutes = useMemo(() => {
-    let total = 0;
-    for (let i = 0; i < todaySorted.length; i++) {
-      if (todaySorted[i].tipo === "entrada") {
-        const exitRecord = todaySorted[i + 1];
-        if (exitRecord && exitRecord.tipo === "saida") {
-          total += differenceInMinutes(
-            parseISO(exitRecord.timestamp_registro),
-            parseISO(todaySorted[i].timestamp_registro)
-          );
-          i++; // skip the exit record
-        } else if (!exitRecord) {
-          // Currently working - count from entry to now
-          total += differenceInMinutes(new Date(), parseISO(todaySorted[i].timestamp_registro));
-        }
-      }
-    }
-    return total;
-  }, [todaySorted, currentTime]);
+  // Calculate today's worked hours using Domain Service
+  const workedTime = useMemo(() => {
+    const entities = todaySorted.map(r => new RegistroPonto({
+        colaborador_id: r.colaborador_id,
+        orgao_id: (r as any).orgao_id || "",
+        tipo: r.tipo as TipoRegistro,
+        timestamp_registro: new Date(r.timestamp_registro)
+    }));
+    return pontoDomainService.calcularHorasTrabalhadas(entities);
+  }, [todaySorted, currentTime]); // Incluímos currentTime pois o cálculo dinâmico (em aberto) depende do 'agora'
 
-  const workedH = Math.floor(todayWorkedMinutes / 60);
-  const workedM = todayWorkedMinutes % 60;
+  const workedH = Math.floor(workedTime.totalMinutos / 60);
+  const workedM = workedTime.totalMinutos % 60;
 
   const handleRegistrar = async () => {
     if (!colaborador) return;
 
     setIsSubmitting(true);
     try {
-      // Get fresh coordinates
       const position = await geo.requestPosition();
 
-      const now = new Date();
-      const { error } = await supabase.from("registros_ponto").insert({
-        colaborador_id: colaborador.id,
-        data_registro: format(now, "yyyy-MM-dd"),
-        hora_registro: now.toTimeString().split(" ")[0],
-        timestamp_registro: now.toISOString(),
-        tipo: nextTipo,
-        latitude: position?.latitude ?? geo.latitude ?? null,
-        longitude: position?.longitude ?? geo.longitude ?? null,
+      // Chamada via Edge Function (Seguindo novo padrão seguro)
+      const { data, error } = await supabase.functions.invoke("registrar-ponto", {
+        body: {
+            matricula: colaborador.matricula,
+            senha_ponto: colaborador.senha_ponto, // Assumindo disponibilidade no context ou prompt
+            latitude: position?.latitude ?? geo.latitude ?? null,
+            longitude: position?.longitude ?? geo.longitude ?? null,
+        }
       });
 
       if (error) throw error;
+      if (data.error) throw new Error(data.error);
 
-      toast.success(`${isEntrada ? "Entrada" : "Saída"} registrada com sucesso!`);
+      toast.success(data.message);
       refetchToday();
+      status.refreshStatus();
       queryClient.invalidateQueries({ queryKey: ["my-registros-ponto"] });
       queryClient.invalidateQueries({ queryKey: ["my-registros-periodo"] });
-    } catch {
-      toast.error("Erro ao registrar ponto.");
+    } catch (err: any) {
+      toast.error(err.message || "Erro ao registrar ponto.");
     } finally {
       setIsSubmitting(false);
     }
@@ -203,23 +199,27 @@ const MeuPontoPage = () => {
         <Button
           size="lg"
           onClick={handleRegistrar}
-          disabled={isSubmitting}
+          disabled={isSubmitting || !status.podeRegistrar}
           className={`w-full h-16 text-lg font-semibold gap-3 ${
-            isEntrada
+            status.proximaAcao === TipoRegistro.ENTRADA
               ? "bg-green-600 hover:bg-green-700 text-white"
               : "bg-orange-600 hover:bg-orange-700 text-white"
           }`}
         >
           {isSubmitting ? (
             <Loader2 className="h-6 w-6 animate-spin" />
-          ) : isEntrada ? (
+          ) : status.cooldown > 0 ? (
+            <Clock className="h-6 w-6" />
+          ) : status.proximaAcao === TipoRegistro.ENTRADA ? (
             <LogIn className="h-6 w-6" />
           ) : (
             <ArrowRightFromLine className="h-6 w-6" />
           )}
           {isSubmitting
             ? "Registrando..."
-            : isEntrada
+            : status.cooldown > 0
+            ? `Aguarde ${status.cooldown}s`
+            : status.proximaAcao === TipoRegistro.ENTRADA
             ? "Registrar Entrada"
             : "Registrar Saída"}
         </Button>

@@ -18,12 +18,9 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 
-const loginSchema = z.object({
-  identifier: z.string().min(3, "Mínimo 3 caracteres"),
-  password: z.string().min(6, "A senha deve ter pelo menos 6 caracteres"),
-});
+import { loginSchema, LoginInput } from "@/domain/auth/validators/authSchemas";
 
-type LoginFormValues = z.infer<typeof loginSchema>;
+type LoginFormValues = LoginInput;
 
 const LoginPage = () => {
   const [loading, setLoading] = useState(false);
