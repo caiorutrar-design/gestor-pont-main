@@ -9,11 +9,12 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { useColaboradores } from "@/hooks/useColaboradores";
 import { useRegistrosPonto } from "@/hooks/useRegistrosPonto";
+import { useFrequenciaMensal } from "@/hooks/useFrequenciaMensal";
 import { useAbonos } from "@/hooks/useAbonos";
 import { useJustificativas } from "@/hooks/useJustificativas";
 import { useFerias } from "@/hooks/useFerias";
-import { Loader2, ArrowLeft, User, Clock, FileText, Calendar, CheckCircle } from "lucide-react";
-import { format, parseISO, differenceInMinutes } from "date-fns";
+import { Loader2, ArrowLeft, User, Clock, FileText, Calendar, CheckCircle, TrendingUp } from "lucide-react";
+import { format, parseISO, differenceInMinutes, startOfMonth } from "date-fns";
 import { useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
@@ -37,6 +38,11 @@ const DossieColaboradorPage = () => {
   const { data: justificativas = [], isLoading: loadingJusts } = useJustificativas(id);
   const { data: ferias = [], isLoading: loadingFerias } = useFerias(id);
 
+  // Frequência mensal pré-computada via materialized view
+  const mesAtual = format(startOfMonth(new Date()), "yyyy-MM-dd");
+  const { data: frequenciaMensal = [] } = useFrequenciaMensal({ colaboradorId: id, mesRef: mesAtual });
+  const freqMes = frequenciaMensal[0]; // Resumo do mês atual
+
   // Audit logs for this collaborator
   const { data: logs = [], isLoading: loadingLogs } = useQuery({
     queryKey: ["audit-logs-dossie", id],
@@ -51,6 +57,7 @@ const DossieColaboradorPage = () => {
       return data;
     },
     enabled: !!id,
+    staleTime: 5 * 60 * 1000, // Logs mudam lentamente
   });
 
   const calcHoras = (regs: typeof registros) => {
@@ -129,6 +136,30 @@ const DossieColaboradorPage = () => {
               </div>
             </CardContent>
           </Card>
+        )}
+
+        {/* Cards de Frequência Mensal (MV) */}
+        {freqMes && (
+          <div className="grid grid-cols-3 gap-3">
+            <Card className="text-center">
+              <CardContent className="pt-4 pb-3">
+                <p className="text-2xl font-bold text-[#0B132B]">{freqMes.dias_trabalhados}</p>
+                <p className="text-[10px] text-slate-500 uppercase font-bold tracking-wider mt-0.5">Dias Trabalhados</p>
+              </CardContent>
+            </Card>
+            <Card className="text-center">
+              <CardContent className="pt-4 pb-3">
+                <p className="text-2xl font-bold text-green-700">{freqMes.total_entradas}</p>
+                <p className="text-[10px] text-slate-500 uppercase font-bold tracking-wider mt-0.5">Entradas no Mês</p>
+              </CardContent>
+            </Card>
+            <Card className="text-center">
+              <CardContent className="pt-4 pb-3">
+                <p className="text-2xl font-bold text-orange-600">{freqMes.total_saidas}</p>
+                <p className="text-[10px] text-slate-500 uppercase font-bold tracking-wider mt-0.5">Saídas no Mês</p>
+              </CardContent>
+            </Card>
+          </div>
         )}
 
         {isLoading ? (

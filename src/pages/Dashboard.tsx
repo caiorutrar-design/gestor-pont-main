@@ -6,10 +6,11 @@ import { AppLayout } from "@/components/layout/AppLayout";
 import { useColaboradores } from "@/hooks/useColaboradores";
 import { useOrgaos } from "@/hooks/useOrgaos";
 import { useRegistrosPonto } from "@/hooks/useRegistrosPonto";
+import { useFrequenciaMensal } from "@/hooks/useFrequenciaMensal";
 import { useIsAdmin } from "@/hooks/useUserRole";
 import { useAuth } from "@/contexts/AuthContext";
-import { Users, Building2, ArrowRight, UserCog, ClipboardList, Clock, Timer, Layout, Database } from "lucide-react";
-import { format } from "date-fns";
+import { Users, Building2, ArrowRight, UserCog, ClipboardList, Clock, Timer, Layout, Database, TrendingUp } from "lucide-react";
+import { format, startOfMonth } from "date-fns";
 import { 
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell 
 } from "recharts";
@@ -45,29 +46,43 @@ const Dashboard = () => {
   }, []);
 
   const hoje = format(new Date(), "yyyy-MM-dd");
+  const mesAtual = format(startOfMonth(new Date()), "yyyy-MM-dd");
+
   const { data: registrosHoje = [] } = useRegistrosPonto({ dataInicio: hoje, dataFim: hoje });
+
+  // 🔥 Dados reais da materialized view (substitui mocks com GROUP BY pesado)
+  const { data: frequenciaMensal = [] } = useFrequenciaMensal({ mesRef: mesAtual });
 
   const colaboradoresAtivos = colaboradores.filter((c) => c.ativo).length;
   const colaboradoresInativos = colaboradores.filter((c) => !c.ativo).length;
 
-  // Mock data para Órgãos (Top 5)
-  const orgaosChartData = useMemo(() => [
-    { name: "PROCON", total: 12 },
-    { name: "SEAD", total: 8 },
-    { name: "SEFAZ", total: 6 },
-    { name: "VIVA", total: 4 },
-    { name: "SEDEL", total: 3 },
-  ], []);
+  // Top 5 colaboradores por dias trabalhados no mês (MV)
+  const orgaosChartData = useMemo(() => {
+    if (frequenciaMensal.length > 0) {
+      return frequenciaMensal
+        .sort((a, b) => b.dias_trabalhados - a.dias_trabalhados)
+        .slice(0, 5)
+        .map(f => ({ name: f.matricula, total: f.dias_trabalhados }));
+    }
+    // Fallback visual enquanto MV carrega
+    return [{ name: "-", total: 0 }];
+  }, [frequenciaMensal]);
 
-  // Mock data para Evolução de Pontos (Registros hoje por turno/hora)
-  const registrosEvolucaoData = useMemo(() => [
-    { hora: "07h", total: 2 },
-    { hora: "08h", total: 15 },
-    { hora: "09h", total: 7 },
-    { hora: "12h", total: 12 },
-    { hora: "13h", total: 5 },
-    { hora: "17h", total: 9 },
-  ], []);
+  // Evolução de frequência no mês (entradas por colaborador da MV)
+  const registrosEvolucaoData = useMemo(() => {
+    if (frequenciaMensal.length > 0) {
+      return frequenciaMensal.slice(0, 6).map(f => ({
+        hora: f.matricula,
+        total: f.total_entradas
+      }));
+    }
+    return [];
+  }, [frequenciaMensal]);
+
+  // Total de dias trabalhados no mês (soma da MV)
+  const totalDiasTrabalhados = useMemo(() =>
+    frequenciaMensal.reduce((acc, f) => acc + (f.dias_trabalhados || 0), 0)
+  , [frequenciaMensal]);
 
   // Data para Ativos vs Inativos
   const statusChartData = useMemo(() => [
@@ -183,16 +198,18 @@ const Dashboard = () => {
                 {(!configs || configs.enabled_cards?.pontos) && (
                   <Card className="card-institutional border-t-4 border-t-[#0B132B] shadow-md">
                     <CardHeader className="flex flex-row items-center justify-between pb-2">
-                      <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-tight">Pontos Registrados Hoje</CardTitle>
+                      <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-tight">Frequência no Mês</CardTitle>
                       <div className="rounded-lg p-2 bg-slate-100">
-                        <Timer className="h-4 w-4 text-[#0B132B]" />
+                        <TrendingUp className="h-4 w-4 text-[#0B132B]" />
                       </div>
                     </CardHeader>
                     <CardContent>
                       <div className="flex items-end justify-between mb-4">
                         <div>
-                          <div className="text-3xl font-bold text-[#0B132B]">{registrosHoje.length}</div>
-                          <p className="text-[10px] text-slate-500 mt-1 uppercase font-bold tracking-wider">{colaboradoresComPonto} colaborador(es)</p>
+                          <div className="text-3xl font-bold text-[#0B132B]">{totalDiasTrabalhados}</div>
+                          <p className="text-[10px] text-slate-500 mt-1 uppercase font-bold tracking-wider">
+                            dias-homem / {registrosHoje.length} pontos hoje
+                          </p>
                         </div>
                       </div>
                       <div className="h-[100px] w-full">
@@ -202,6 +219,7 @@ const Dashboard = () => {
                             <Tooltip 
                               cursor={{ fill: 'rgba(197, 27, 41, 0.05)' }}
                               contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)' }}
+                              formatter={(val: any) => [`${val} entradas`, ""]}
                             />
                             <Bar dataKey="total" radius={[4, 4, 0, 0]}>
                                {registrosEvolucaoData.map((entry, index) => (
@@ -210,6 +228,7 @@ const Dashboard = () => {
                             </Bar>
                           </BarChart>
                         </ResponsiveContainer>
+                        <p className="text-[9px] text-center text-slate-400 mt-1 font-bold uppercase tracking-widest">Top 6 – Entradas no mês (MV)</p>
                       </div>
                     </CardContent>
                   </Card>
