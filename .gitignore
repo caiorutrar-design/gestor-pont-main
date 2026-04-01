@@ -11,8 +11,6 @@ node_modules
 dist
 dist-ssr
 *.local
-
-# Variáveis de ambiente — NUNCA commitar arquivos .env com valores reais
 .env
 .env.*
 !.env.example

@@ -170,6 +170,44 @@ export type Database = {
           },
         ]
       }
+      feature_flags: {
+        Row: {
+          created_at: string
+          description: string | null
+          enabled: boolean
+          id: string
+          key: string
+          orgao_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          enabled?: boolean
+          id?: string
+          key: string
+          orgao_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          enabled?: boolean
+          id?: string
+          key?: string
+          orgao_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "feature_flags_orgao_id_fkey"
+            columns: ["orgao_id"]
+            isOneToOne: false
+            referencedRelation: "orgaos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ferias: {
         Row: {
           aprovado_por: string | null
@@ -402,6 +440,7 @@ export type Database = {
           id: string
           latitude: number | null
           longitude: number | null
+          orgao_id: string | null
           timestamp_registro: string
           tipo: string
         }
@@ -414,6 +453,7 @@ export type Database = {
           id?: string
           latitude?: number | null
           longitude?: number | null
+          orgao_id?: string | null
           timestamp_registro?: string
           tipo: string
         }
@@ -426,6 +466,7 @@ export type Database = {
           id?: string
           latitude?: number | null
           longitude?: number | null
+          orgao_id?: string | null
           timestamp_registro?: string
           tipo?: string
         }

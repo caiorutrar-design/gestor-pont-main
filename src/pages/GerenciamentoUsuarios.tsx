@@ -66,15 +66,9 @@ const RoleIcon = ({ role }: { role: string | null }) => {
 
 // --- SCHEMA & MODAL DE EDIÇÃO ---
 
-const editUserSchema = z.object({
-  nome: z.string().min(2, "Nome deve ter pelo menos 2 caracteres"),
-  email: z.string().email("Email inválido"),
-  password: z.string().optional(),
-  role: z.string().min(1, "Papel é obrigatório"),
-  unidades_selecionadas: z.array(z.string()).default([]),
-});
+import { editUserSchema, EditUserInput } from "@/domain/auth/validators/userManagementSchemas";
 
-type EditUserFormValues = z.infer<typeof editUserSchema>;
+type EditUserFormValues = EditUserInput;
 
 const EditarUsuarioDialog = ({ 
   user, onClose, onSuccess
