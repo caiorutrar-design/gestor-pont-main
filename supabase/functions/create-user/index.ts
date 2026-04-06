@@ -174,7 +174,7 @@ Deno.serve(async (req) => {
     console.log(`[Create] Auth ID gerado: ${userId}`);
 
     // Trigger might have already created profile, so we use UPDATE + retry handle
-    console.log("[Create] Atualizando profile...");
+    console.log("[Create] Tentando atualizar profile (ignorar falhas, tabela secundária)...");
     const { error: profileError } = await supabaseAdmin
       .from("profiles")
       .update({ nome_completo: nome, email: email })
@@ -182,19 +182,35 @@ Deno.serve(async (req) => {
     
     if (profileError) console.error("[Create] Profile update warning:", profileError);
 
-    console.log("[Create] Associando papel (role)...");
-    await supabaseAdmin.from("user_roles").insert({ user_id: userId, role });
+    console.log("[Create] Associando papel (user_roles fallback)...");
+    const { error: insertRoleInfo } = await supabaseAdmin.from("user_roles").insert({ user_id: userId, role });
+    if (insertRoleInfo) console.error("[Create] Falha ao inserir em user_roles (pode já ter sido criado por trigger):", insertRoleInfo);
 
-    // COMPATIBILITY: If flag is FALSE, create colaborador automatically
+    // INTEGRAÇÃO COM TABELA PRINCIPAL: COLABORADORES
     if (!isSeparateActive) {
-      console.log("[Create] Flag desativada: Criando registro em colaboradores...");
-      await supabaseAdmin.from("colaboradores").insert({
-        user_id: userId,
-        nome_completo: nome,
-        matricula: email.split("@")[0], // Fallback para matricula
-        cargo: "Dashboard User",
-        orgao_id: (await supabaseAdmin.from("orgaos").select("id").limit(1).single()).data?.id // Pega primeiro órgão como padrão
-      });
+      console.log("[Create] Criando registro na tabela principal: colaboradores...");
+      
+      const { data: firstOrgao } = await supabaseAdmin.from("orgaos").select("id").limit(1).maybeSingle();
+      
+      if (!firstOrgao?.id) {
+         console.warn("[Create] ALERTA: Nenhum órgão encontrado. Registro na tabela 'colaboradores' será ignorado para evitar erro NOT NULL.");
+      } else {
+         const { error: colabError } = await supabaseAdmin.from("colaboradores").insert({
+            user_id: userId,
+            nome_completo: nome,
+            matricula: email.split("@")[0], // Fallback para matricula
+            cargo: role === 'gestor' ? 'Gestor' : (role === 'admin' || role === 'super_admin' ? 'Administrador' : 'Colaborador'),
+            orgao_id: firstOrgao.id
+         });
+
+         if (colabError) {
+             console.error("[Create] Erro ao inserir colaborador: ", colabError);
+             return new Response(JSON.stringify({ error: "Usuário criado na Autenticação, mas falha ao inserir na tabela 'colaboradores'. " + colabError.message }), {
+                 status: 400,
+                 headers: { ...corsHeaders, "Content-Type": "application/json" }
+             });
+         }
+      }
     }
 
     // Audit Log
