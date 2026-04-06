@@ -49,11 +49,12 @@ const UnidadesTrabalhoPage = () => {
   };
 
   const handleGetCurrentLocation = () => {
-    if (!navigator.geolocation) {
+    if (!window.navigator.geolocation) {
       toast.error("Geolocalização não suportada.");
       return;
     }
-    navigator.geolocation.getCurrentPosition(
+    
+    window.navigator.geolocation.getCurrentPosition(
       (pos) => {
         setForm((f) => ({ ...f, latitude: Number(pos.coords.latitude.toFixed(7)), longitude: Number(pos.coords.longitude.toFixed(7)) }));
         toast.success("Localização capturada!");

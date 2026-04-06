@@ -43,14 +43,14 @@ describe("LoginPage", () => {
 
   it("renderiza o formulário de login", () => {
     renderLogin();
-    expect(screen.getByText("Gestão de Frequência")).toBeInTheDocument();
-    expect(screen.getByText("Entrar")).toBeInTheDocument();
-    expect(screen.getByPlaceholderText("seu@email.com ou matrícula")).toBeInTheDocument();
+    expect(screen.getByText(/Gestão Portuária/i)).toBeInTheDocument();
+    expect(screen.getByText("Acessar Sistema")).toBeInTheDocument();
+    expect(screen.getByPlaceholderText("Ex: 123456")).toBeInTheDocument();
     expect(screen.getByPlaceholderText("••••••••")).toBeInTheDocument();
   });
 
   it("renderiza link para cadastro", () => {
     renderLogin();
-    expect(screen.getByText("Cadastre-se")).toBeInTheDocument();
+    expect(screen.getByText("Criar Nova Conta")).toBeInTheDocument();
   });
 });

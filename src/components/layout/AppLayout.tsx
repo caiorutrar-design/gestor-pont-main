@@ -2,13 +2,15 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import {
   LayoutDashboard, Users, Building2, Menu, X, LogOut,
-  Shield, ShieldCheck, ClipboardList, UserCog, Clock, Timer, Briefcase, MapPinCheck, Settings2,
+  Shield, ShieldCheck, ClipboardList, UserCog, Clock, Timer, Briefcase, MapPinCheck, Settings2, FileText,
 } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { useIsAdmin } from "@/hooks/useUserRole";
 import { Badge } from "@/components/ui/badge";
+import { useRealtimeNotifications } from "@/hooks/useRealtimeNotifications";
+import { useMyColaborador } from "@/hooks/useMyColaborador";
 
 interface NavItem {
   name: string;
@@ -34,6 +36,7 @@ const navGroups: NavGroup[] = [
     label: "Gestão Institucional",
     items: [
       { name: "Registros Equipe", href: "/gerenciar-pontos", icon: Timer, requiredRole: "gestor" },
+      { name: "Relatórios & BI", href: "/relatorios", icon: FileText, requiredRole: "gestor" },
       { name: "Painel de RH", href: "/gestao-rh", icon: Briefcase, requiredRole: "gestor" },
     ]
   },
@@ -55,6 +58,11 @@ interface AppLayoutProps {
 }
 
 export function AppLayout({ children }: AppLayoutProps) {
+  const { data: colaborador } = useMyColaborador();
+  
+  // Notificações Realtime para o órgão do colaborador logado
+  useRealtimeNotifications(colaborador?.orgao_id);
+
   const location = useLocation();
   const navigate = useNavigate();
   const { signOut, user } = useAuth();
@@ -104,8 +112,9 @@ export function AppLayout({ children }: AppLayoutProps) {
             variant="ghost" size="icon"
             className="lg:hidden absolute top-4 right-4 text-white/70 hover:text-white hover:bg-white/10"
             onClick={() => setSidebarOpen(false)}
+            aria-label="Fechar menu lateral"
           >
-            <X className="h-5 w-5" />
+            <X className="h-5 w-5" aria-hidden="true" />
           </Button>
 
           <div className="space-y-4 w-full flex flex-col items-center pt-2">
@@ -154,6 +163,7 @@ export function AppLayout({ children }: AppLayoutProps) {
                             : "text-slate-400 hover:bg-[#15203D] hover:text-slate-100"
                         )}
                         onClick={() => setSidebarOpen(false)}
+                        aria-current={isActive ? "page" : undefined}
                       >
                         {/* Indicador de Borda para Hover (Efeito Sutil) */}
                         {!isActive && (
@@ -198,8 +208,9 @@ export function AppLayout({ children }: AppLayoutProps) {
             variant="ghost"
             className="w-full justify-start gap-3 rounded-lg text-slate-400 hover:text-white hover:bg-red-500/10 hover:border-red-500/20 border border-transparent transition-all mb-2"
             onClick={handleSignOut}
+            aria-label="Encerrar sessão"
           >
-            <LogOut className="h-4 w-4" />
+            <LogOut className="h-4 w-4" aria-hidden="true" />
             <span className="text-sm">Encerrar Sessão</span>
           </Button>
           
@@ -214,8 +225,13 @@ export function AppLayout({ children }: AppLayoutProps) {
       <div className="lg:pl-72 flex flex-col min-h-screen">
         {/* Mobile Header */}
         <header className="sticky top-0 z-30 flex h-16 items-center gap-4 bg-[#C51B29] border-b border-[#A01622] px-4 lg:hidden shadow-lg">
-          <Button variant="ghost" size="icon" onClick={() => setSidebarOpen(true)} className="text-white hover:bg-white/10">
-            <Menu className="h-5 w-5" />
+          <Button 
+            variant="ghost" size="icon" 
+            onClick={() => setSidebarOpen(true)} 
+            className="text-white hover:bg-white/10"
+            aria-label="Abrir menu lateral"
+          >
+            <Menu className="h-5 w-5" aria-hidden="true" />
           </Button>
           <div className="flex items-center gap-2">
             <h1 className="font-['Montserrat'] font-[900] text-white text-lg tracking-tighter">

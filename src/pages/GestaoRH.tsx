@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { AppLayout } from "@/components/layout/AppLayout";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -19,7 +19,7 @@ import { useColaboradores } from "@/hooks/useColaboradores";
 import { useAbonos, useCreateAbono } from "@/hooks/useAbonos";
 import { useJustificativas, useCreateJustificativa } from "@/hooks/useJustificativas";
 import { useFerias, useCreateFerias } from "@/hooks/useFerias";
-import { Loader2, Plus, FileText, Calendar, CheckCircle, Upload, Eye } from "lucide-react";
+import { Loader2, FileText, Calendar, CheckCircle, Upload, Eye } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { useNavigate } from "react-router-dom";
 

@@ -12,10 +12,16 @@ import { useGeolocation } from "@/hooks/useGeolocation";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
-  Clock, LogOut, LogIn, ArrowRightFromLine, Loader2, CalendarDays, ChevronLeft, ChevronRight, MapPin, MapPinOff,
+  Clock, LogOut, LogIn, ArrowRightFromLine, Loader2, CalendarDays, ChevronLeft, ChevronRight,
 } from "lucide-react";
-import { format, startOfMonth, endOfMonth, subMonths, addMonths, parseISO, differenceInMinutes } from "date-fns";
+import { format, startOfMonth, endOfMonth, subMonths, addMonths, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { pontoDomainService } from "@/domain/ponto/services/PontoDomainService";
+import { RegistroPonto } from "@/domain/ponto/entities/RegistroPonto";
+import { TipoRegistro } from "@/domain/ponto/types";
+import { usePontoStatus } from "@/hooks/usePontoStatus";
+
+import { PontoClock, GeolocationStatus, PontoStats } from "./meu-ponto/components";
 
 const MeuPontoPage = () => {
   const navigate = useNavigate();
@@ -34,6 +40,7 @@ const MeuPontoPage = () => {
 
   const { data: todayRecords = [], refetch: refetchToday } = useMyRegistrosPonto(colaborador?.id, today);
   const { data: recentRecords = [] } = useMyRegistrosPonto(colaborador?.id);
+  const status = usePontoStatus(colaborador?.id);
 
   // Calendar month records
   const monthStart = format(startOfMonth(calendarMonth), "yyyy-MM-dd");
@@ -58,6 +65,7 @@ const MeuPontoPage = () => {
   // Request geolocation on mount
   useEffect(() => {
     geo.requestPosition();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Real-time clock
@@ -75,57 +83,46 @@ const MeuPontoPage = () => {
   const nextTipo = !lastRecord || lastRecord.tipo === "saida" ? "entrada" : "saida";
   const isEntrada = nextTipo === "entrada";
 
-  // Calculate today's worked hours dynamically (no fixed target)
-  const todayWorkedMinutes = useMemo(() => {
-    let total = 0;
-    for (let i = 0; i < todaySorted.length; i++) {
-      if (todaySorted[i].tipo === "entrada") {
-        const exitRecord = todaySorted[i + 1];
-        if (exitRecord && exitRecord.tipo === "saida") {
-          total += differenceInMinutes(
-            parseISO(exitRecord.timestamp_registro),
-            parseISO(todaySorted[i].timestamp_registro)
-          );
-          i++; // skip the exit record
-        } else if (!exitRecord) {
-          // Currently working - count from entry to now
-          total += differenceInMinutes(new Date(), parseISO(todaySorted[i].timestamp_registro));
-        }
-      }
-    }
-    return total;
-  }, [todaySorted, currentTime]);
+  // Calculate today's worked hours using Domain Service
+  const workedTime = useMemo(() => {
+    const entities = todaySorted.map(r => new RegistroPonto({
+        colaborador_id: r.colaborador_id,
+        orgao_id: (r as any).orgao_id || "",
+        tipo: r.tipo as TipoRegistro,
+        timestamp_registro: new Date(r.timestamp_registro)
+    }));
+    return pontoDomainService.calcularHorasTrabalhadas(entities);
+  }, [todaySorted]); // Removido currentTime - cálculo é estático para registros passados
 
-  const workedH = Math.floor(todayWorkedMinutes / 60);
-  const workedM = todayWorkedMinutes % 60;
+  const workedH = Math.floor(workedTime.totalMinutos / 60);
+  const workedM = workedTime.totalMinutos % 60;
 
   const handleRegistrar = async () => {
     if (!colaborador) return;
 
     setIsSubmitting(true);
     try {
-      // Get fresh coordinates
       const position = await geo.requestPosition();
 
-      const now = new Date();
-      const { error } = await supabase.from("registros_ponto").insert({
-        colaborador_id: colaborador.id,
-        data_registro: format(now, "yyyy-MM-dd"),
-        hora_registro: now.toTimeString().split(" ")[0],
-        timestamp_registro: now.toISOString(),
-        tipo: nextTipo,
-        latitude: position?.latitude ?? geo.latitude ?? null,
-        longitude: position?.longitude ?? geo.longitude ?? null,
+      const { data, error } = await supabase.functions.invoke("registrar-ponto", {
+        body: {
+            matricula: colaborador.matricula,
+            senha_ponto: colaborador.senha_ponto,
+            latitude: position?.latitude ?? geo.latitude ?? null,
+            longitude: position?.longitude ?? geo.longitude ?? null,
+        }
       });
 
       if (error) throw error;
+      if (data.error) throw new Error(data.error);
 
-      toast.success(`${isEntrada ? "Entrada" : "Saída"} registrada com sucesso!`);
+      toast.success(data.message);
       refetchToday();
+      status.refreshStatus();
       queryClient.invalidateQueries({ queryKey: ["my-registros-ponto"] });
       queryClient.invalidateQueries({ queryKey: ["my-registros-periodo"] });
-    } catch {
-      toast.error("Erro ao registrar ponto.");
+    } catch (err: any) {
+      toast.error(err.message || "Erro ao registrar ponto.");
     } finally {
       setIsSubmitting(false);
     }
@@ -147,10 +144,16 @@ const MeuPontoPage = () => {
   if (!colaborador) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background p-4">
-        <Card className="max-w-md w-full">
-          <CardContent className="py-8 text-center space-y-4">
-            <p className="text-muted-foreground">Sua conta não está vinculada a nenhum colaborador.</p>
-            <Button onClick={handleSignOut} variant="outline">Sair</Button>
+        <Card className="max-w-md w-full border-none shadow-xl">
+          <CardContent className="py-12 text-center space-y-6">
+            <div className="bg-amber-100 p-4 rounded-full w-20 h-20 flex items-center justify-center mx-auto">
+              <LogOut className="h-10 w-10 text-amber-600" />
+            </div>
+            <div className="space-y-2">
+              <h3 className="text-xl font-bold text-slate-800">Colaborador não localizado</h3>
+              <p className="text-slate-500 text-sm">Sua conta não está vinculada a nenhum colaborador ativo no sistema.</p>
+            </div>
+            <Button onClick={handleSignOut} variant="secondary" className="w-full">Sair e Tentar Novamente</Button>
           </CardContent>
         </Card>
       </div>
@@ -162,64 +165,47 @@ const MeuPontoPage = () => {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="sticky top-0 z-30 border-b bg-card px-4 py-3">
+      <header className="sticky top-0 z-30 border-b bg-card px-4 py-3 shadow-sm">
         <div className="max-w-lg mx-auto flex items-center justify-between">
           <div className="min-w-0 flex-1">
-            <p className="font-semibold text-foreground truncate">{colaborador.nome_completo}</p>
-            <p className="text-xs text-muted-foreground">Matrícula: {colaborador.matricula}</p>
+            <p className="font-bold text-foreground truncate">{colaborador.nome_completo}</p>
+            <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-semibold">Matrícula: {colaborador.matricula}</p>
           </div>
-          <Button variant="ghost" size="sm" onClick={handleSignOut} className="gap-1 shrink-0">
-            <LogOut className="h-4 w-4" /> Sair
+          <Button variant="ghost" size="sm" onClick={handleSignOut} className="gap-2 shrink-0 text-slate-500 hover:text-destructive hover:bg-destructive/5 transition-colors" aria-label="Sair">
+            <LogOut className="h-4 w-4" aria-hidden="true" /> <span className="hidden sm:inline">Sair</span>
           </Button>
         </div>
       </header>
 
-      <div className="max-w-lg mx-auto p-4 space-y-5">
-        {/* Clock */}
-        <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-primary/10">
-          <CardContent className="flex flex-col items-center py-6">
-            <Clock className="h-6 w-6 text-primary mb-1" />
-            <p className="text-4xl sm:text-5xl font-mono font-bold text-foreground tracking-wider">
-              {currentTime.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
-            </p>
-            <p className="text-sm text-muted-foreground mt-1">
-              {currentTime.toLocaleDateString("pt-BR", { weekday: "long", day: "2-digit", month: "long", year: "numeric" })}
-            </p>
-          </CardContent>
-        </Card>
+      <div className="max-w-lg mx-auto p-4 space-y-5 pb-24">
+        <PontoClock currentTime={currentTime} />
+        <GeolocationStatus geo={geo} />
+        <PontoStats workedH={workedH} workedM={workedM} />
 
-        {/* Geolocation Status */}
-        <div className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs ${geo.latitude ? "bg-green-500/10 text-green-700" : geo.error ? "bg-destructive/10 text-destructive" : "bg-muted text-muted-foreground"}`}>
-          {geo.loading ? (
-            <><Loader2 className="h-3 w-3 animate-spin" /><span>Obtendo localização...</span></>
-          ) : geo.latitude ? (
-            <><MapPin className="h-3 w-3" /><span>Localização ativa ({geo.accuracy ? `±${Math.round(geo.accuracy)}m` : ""})</span></>
-          ) : (
-            <><MapPinOff className="h-3 w-3" /><span>{geo.error || "Localização indisponível"}</span></>
-          )}
-        </div>
-
-        {/* Main Action Button */}
         <Button
           size="lg"
           onClick={handleRegistrar}
-          disabled={isSubmitting}
+          disabled={isSubmitting || !status.podeRegistrar}
           className={`w-full h-16 text-lg font-semibold gap-3 ${
-            isEntrada
+            status.proximaAcao === TipoRegistro.ENTRADA
               ? "bg-green-600 hover:bg-green-700 text-white"
               : "bg-orange-600 hover:bg-orange-700 text-white"
           }`}
         >
           {isSubmitting ? (
             <Loader2 className="h-6 w-6 animate-spin" />
-          ) : isEntrada ? (
+          ) : status.cooldown > 0 ? (
+            <Clock className="h-6 w-6" />
+          ) : status.proximaAcao === TipoRegistro.ENTRADA ? (
             <LogIn className="h-6 w-6" />
           ) : (
             <ArrowRightFromLine className="h-6 w-6" />
           )}
           {isSubmitting
             ? "Registrando..."
-            : isEntrada
+            : status.cooldown > 0
+            ? `Aguarde ${status.cooldown}s`
+            : status.proximaAcao === TipoRegistro.ENTRADA
             ? "Registrar Entrada"
             : "Registrar Saída"}
         </Button>

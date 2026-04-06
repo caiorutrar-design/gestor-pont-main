@@ -1,6 +1,6 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { AppLayout } from "@/components/layout/AppLayout";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -9,14 +9,16 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { useColaboradores } from "@/hooks/useColaboradores";
 import { useRegistrosPonto } from "@/hooks/useRegistrosPonto";
+import { useFrequenciaMensal } from "@/hooks/useFrequenciaMensal";
 import { useAbonos } from "@/hooks/useAbonos";
 import { useJustificativas } from "@/hooks/useJustificativas";
 import { useFerias } from "@/hooks/useFerias";
 import { Loader2, ArrowLeft, User, Clock, FileText, Calendar, CheckCircle } from "lucide-react";
-import { format, parseISO, differenceInMinutes } from "date-fns";
+import { format, parseISO, differenceInMinutes, startOfMonth } from "date-fns";
 import { useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
+import { RegistroPonto } from "@/domain/ponto/entities/RegistroPonto";
 
 const tipoFeriasLabels: Record<string, string> = {
   ferias_anuais: "Férias Anuais",
@@ -37,6 +39,11 @@ const DossieColaboradorPage = () => {
   const { data: justificativas = [], isLoading: loadingJusts } = useJustificativas(id);
   const { data: ferias = [], isLoading: loadingFerias } = useFerias(id);
 
+  // Frequência mensal pré-computada via materialized view
+  const mesAtual = format(startOfMonth(new Date()), "yyyy-MM-dd");
+  const { data: frequenciaMensal = [] } = useFrequenciaMensal({ colaboradorId: id, mesRef: mesAtual });
+  const freqMes = frequenciaMensal[0]; // Resumo do mês atual
+
   // Audit logs for this collaborator
   const { data: logs = [], isLoading: loadingLogs } = useQuery({
     queryKey: ["audit-logs-dossie", id],
@@ -51,14 +58,15 @@ const DossieColaboradorPage = () => {
       return data;
     },
     enabled: !!id,
+    staleTime: 5 * 60 * 1000, // Logs mudam lentamente
   });
 
-  const calcHoras = (regs: typeof registros) => {
-    const sorted = [...regs].sort((a, b) => a.timestamp_registro.localeCompare(b.timestamp_registro));
+  const calcHoras = (regs: RegistroPonto[]) => {
+    const sorted = [...regs].sort((a, b) => a.timestamp_registro.getTime() - b.timestamp_registro.getTime());
     let total = 0;
     for (let i = 0; i < sorted.length - 1; i += 2) {
       if (sorted[i].tipo === "entrada" && sorted[i + 1]?.tipo === "saida") {
-        total += differenceInMinutes(parseISO(sorted[i + 1].timestamp_registro), parseISO(sorted[i].timestamp_registro));
+        total += differenceInMinutes(sorted[i + 1].timestamp_registro, sorted[i].timestamp_registro);
       }
     }
     return `${Math.floor(total / 60)}h${(total % 60).toString().padStart(2, "0")}m`;
@@ -66,9 +74,9 @@ const DossieColaboradorPage = () => {
 
   // Group registros by date
   const registrosByDate = useMemo(() => {
-    const map = new Map<string, typeof registros>();
+    const map = new Map<string, RegistroPonto[]>();
     registros.forEach((r) => {
-      const key = r.data_registro;
+      const key = format(r.timestamp_registro, "yyyy-MM-dd");
       if (!map.has(key)) map.set(key, []);
       map.get(key)!.push(r);
     });
@@ -131,6 +139,30 @@ const DossieColaboradorPage = () => {
           </Card>
         )}
 
+        {/* Cards de Frequência Mensal (MV) */}
+        {freqMes && (
+          <div className="grid grid-cols-3 gap-3">
+            <Card className="text-center">
+              <CardContent className="pt-4 pb-3">
+                <p className="text-2xl font-bold text-[#0B132B]">{freqMes.dias_trabalhados}</p>
+                <p className="text-[10px] text-slate-500 uppercase font-bold tracking-wider mt-0.5">Dias Trabalhados</p>
+              </CardContent>
+            </Card>
+            <Card className="text-center">
+              <CardContent className="pt-4 pb-3">
+                <p className="text-2xl font-bold text-green-700">{freqMes.total_entradas}</p>
+                <p className="text-[10px] text-slate-500 uppercase font-bold tracking-wider mt-0.5">Entradas no Mês</p>
+              </CardContent>
+            </Card>
+            <Card className="text-center">
+              <CardContent className="pt-4 pb-3">
+                <p className="text-2xl font-bold text-orange-600">{freqMes.total_saidas}</p>
+                <p className="text-[10px] text-slate-500 uppercase font-bold tracking-wider mt-0.5">Saídas no Mês</p>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
         {isLoading ? (
           <div className="flex items-center justify-center py-12">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -174,7 +206,7 @@ const DossieColaboradorPage = () => {
                           <TableCell>{format(parseISO(data), "dd/MM/yyyy")}</TableCell>
                           <TableCell>
                             <div className="flex flex-wrap gap-1">
-                              {regs.sort((a, b) => a.timestamp_registro.localeCompare(b.timestamp_registro)).map((r) => (
+                              {regs.sort((a, b) => a.timestamp_registro.getTime() - b.timestamp_registro.getTime()).map((r) => (
                                 <span key={r.id} className={`text-xs px-1.5 py-0.5 rounded ${r.tipo === "entrada" ? "bg-green-100 text-green-800" : "bg-orange-100 text-orange-800"}`}>
                                   {r.hora_registro?.substring(0, 5)} ({r.tipo === "entrada" ? "E" : "S"})
                                 </span>

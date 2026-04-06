@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -6,8 +7,36 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useGeolocation } from "@/hooks/useGeolocation";
-import { Clock, CheckCircle2, AlertCircle, Loader2, MapPin, MapPinOff } from "lucide-react";
+import { AlertCircle, Loader2, MapPin, MapPinOff, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
+import { usePontoStatus } from "@/hooks/usePontoStatus";
+import { useMyColaborador } from "@/hooks/useMyColaborador";
+import { registrarPontoSchema } from "@/domain/ponto/validators/pontoSchemas";
+import { TipoRegistro } from "@/domain/ponto/types";
+import { RegistroSuccessOverlay, GeoStatusBadge } from "./registro-ponto/components";
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1
+    }
+  }
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 20 },
+  show: { 
+    opacity: 1, 
+    y: 0, 
+    transition: { 
+      type: "spring" as const, 
+      stiffness: 260, 
+      damping: 20 
+    } 
+  }
+};
 
 const RegistroPontoPage = () => {
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -22,13 +51,14 @@ const RegistroPontoPage = () => {
   } | null>(null);
 
   const geo = useGeolocation();
+  const { data: myColab } = useMyColaborador();
+  const status = usePontoStatus(myColab?.id);
 
-  // Request geolocation on mount
   useEffect(() => {
+    // Solicita posição apenas na montagem inicial para validação
     geo.requestPosition();
-  }, []);
+  }, [geo]);
 
-  // Real-time clock
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(timer);
@@ -38,29 +68,35 @@ const RegistroPontoPage = () => {
     date.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
 
   const formatDate = (date: Date) =>
-    date.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" });
+    date.toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!matricula.trim() || !senhaPonto.trim()) {
-      toast.error("Preencha matrícula e senha.");
+    const validation = registrarPontoSchema.safeParse({
+      matricula: matricula.trim(),
+      senha_ponto: senhaPonto.trim(),
+      latitude: geo.latitude,
+      longitude: geo.longitude
+    });
+
+    if (!validation.success) {
+      toast.error(validation.error.issues[0].message);
       return;
     }
 
     setIsSubmitting(true);
     setLastResult(null);
 
-    // Try to get fresh coordinates before submitting
-    const position = await geo.requestPosition();
-
     try {
+      const position = await geo.requestPosition();
+
       const { data, error } = await supabase.functions.invoke("registrar-ponto", {
         body: {
           matricula: matricula.trim(),
           senha_ponto: senhaPonto.trim(),
-          latitude: position?.latitude ?? geo.latitude,
-          longitude: position?.longitude ?? geo.longitude,
+          latitude: position?.latitude ?? geo.latitude ?? undefined,
+          longitude: position?.longitude ?? geo.longitude ?? undefined,
         },
       });
 
@@ -79,6 +115,9 @@ const RegistroPontoPage = () => {
         toast.success(data.message);
         setMatricula("");
         setSenhaPonto("");
+        status.refreshStatus();
+        
+        setTimeout(() => setLastResult(null), 4000);
       }
     } catch {
       setLastResult({ success: false, message: "Erro ao conectar com o servidor." });
@@ -88,117 +127,171 @@ const RegistroPontoPage = () => {
     }
   };
 
+  const renderSuccessOverlay = () => {
+    if (!lastResult?.success) return null;
+    return (
+      <RegistroSuccessOverlay 
+        result={lastResult} 
+        onClose={() => setLastResult(null)} 
+        formatTime={formatTime} 
+        formatDate={formatDate} 
+      />
+    );
+  };
+
   return (
     <AppLayout>
-      <div className="max-w-lg mx-auto space-y-6 animate-fade-in">
-        {/* Clock */}
-        <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-primary/10">
-          <CardContent className="flex flex-col items-center py-8">
-            <Clock className="h-8 w-8 text-primary mb-2" />
-            <p className="text-5xl font-mono font-bold text-foreground tracking-wider">
-              {formatTime(currentTime)}
-            </p>
-            <p className="text-lg text-muted-foreground mt-2">{formatDate(currentTime)}</p>
-          </CardContent>
-        </Card>
+      <motion.div 
+        className="max-w-lg mx-auto space-y-8 py-4 relative"
+        initial="hidden"
+        animate="show"
+        variants={containerVariants}
+      >
+        <AnimatePresence>
+          {renderSuccessOverlay()}
+        </AnimatePresence>
 
-        {/* Geolocation Status */}
-        <Card className={`border ${geo.latitude ? "border-green-500/30 bg-green-500/5" : geo.error ? "border-destructive/30 bg-destructive/5" : "border-muted"}`}>
-          <CardContent className="flex items-center gap-3 py-3">
-            {geo.loading ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-                <span className="text-sm text-muted-foreground">Obtendo localização...</span>
-              </>
-            ) : geo.latitude ? (
-              <>
-                <MapPin className="h-4 w-4 text-green-600" />
-                <span className="text-sm text-green-700">Localização obtida ({geo.accuracy ? `±${Math.round(geo.accuracy)}m` : ""})</span>
-              </>
-            ) : (
-              <>
-                <MapPinOff className="h-4 w-4 text-destructive" />
-                <div className="flex-1">
-                  <span className="text-sm text-destructive">{geo.error || "Localização indisponível"}</span>
-                </div>
-                <Button variant="outline" size="sm" onClick={() => geo.requestPosition()}>Tentar novamente</Button>
-              </>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Registration Form */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-center">Registro de Ponto</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="matricula">Matrícula</Label>
-                <Input
-                  id="matricula"
-                  type="text"
-                  inputMode="numeric"
-                  placeholder="Digite sua matrícula"
-                  value={matricula}
-                  onChange={(e) => setMatricula(e.target.value)}
-                  disabled={isSubmitting}
-                  autoComplete="off"
-                />
+        {/* Clock Card - Premium Style */}
+        <motion.div 
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="relative group"
+        >
+          <div className="absolute -inset-1 bg-gradient-to-r from-primary/20 to-orange-500/20 rounded-[2rem] blur opacity-25 group-hover:opacity-50 transition duration-1000 group-hover:duration-200" />
+          <Card className="relative border-none bg-white/80 backdrop-blur-xl shadow-premium rounded-[2rem] overflow-hidden">
+            <CardContent className="flex flex-col items-center py-10 relative z-10">
+              <div className="absolute top-4 right-4 z-20">
+                <GeoStatusBadge geo={geo} />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="senha">Senha de Ponto</Label>
-                <Input
-                  id="senha"
-                  type="password"
-                  placeholder="Digite sua senha de ponto"
-                  value={senhaPonto}
-                  onChange={(e) => setSenhaPonto(e.target.value)}
-                  disabled={isSubmitting}
-                  autoComplete="off"
-                />
-              </div>
-              <Button type="submit" className="w-full" size="lg" disabled={isSubmitting}>
-                {isSubmitting ? (
-                  <>
-                    <Loader2 className="h-5 w-5 animate-spin mr-2" />
-                    Registrando...
-                  </>
-                ) : (
-                  "Registrar Ponto"
-                )}
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
-
-        {/* Result Feedback */}
-        {lastResult && (
-          <Card className={lastResult.success ? "border-green-500/30 bg-green-500/5" : "border-destructive/30 bg-destructive/5"}>
-            <CardContent className="flex items-start gap-3 py-4">
-              {lastResult.success ? (
-                <CheckCircle2 className="h-5 w-5 text-green-600 mt-0.5 shrink-0" />
-              ) : (
-                <AlertCircle className="h-5 w-5 text-destructive mt-0.5 shrink-0" />
-              )}
-              <div>
-                {lastResult.colaborador_nome && (
-                  <p className="font-medium text-foreground">{lastResult.colaborador_nome}</p>
-                )}
-                <p className="text-sm text-muted-foreground">{lastResult.message}</p>
-                {lastResult.tipo && (
-                  <span className={`inline-block mt-1 text-xs font-medium px-2 py-0.5 rounded-full ${
-                    lastResult.tipo === "entrada" ? "bg-green-100 text-green-800" : "bg-orange-100 text-orange-800"
-                  }`}>
-                    {lastResult.tipo === "entrada" ? "Entrada" : "Saída"}
-                  </span>
-                )}
-              </div>
+              <div className="text-[10px] font-black uppercase tracking-[0.3em] text-primary/60 mb-3 bg-primary/5 px-4 py-1.5 rounded-full">Procon MA Hub</div>
+              <p className="text-6xl font-black text-secondary tracking-tighter drop-shadow-sm">
+                {formatTime(currentTime)}
+              </p>
+              <p className="text-sm font-bold text-slate-400 mt-3 uppercase tracking-widest">{formatDate(currentTime)}</p>
             </CardContent>
           </Card>
+        </motion.div>
+
+        {/* Geolocation Status - Micro-interaction */}
+        <motion.div 
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.1 }}
+          className={`rounded-2xl border transition-all duration-500 ${
+            geo.latitude 
+              ? "border-green-500/20 bg-green-500/5" 
+              : geo.error 
+                ? "border-primary/20 bg-primary/5" 
+                : "border-slate-200 bg-white shadow-sm"
+          }`}
+        >
+          <div className="flex items-center gap-4 px-5 py-4">
+            <div className={`p-2.5 rounded-xl ${geo.latitude ? "bg-green-500/10" : "bg-primary/10"}`}>
+              {geo.loading ? (
+                <Loader2 className="h-5 w-5 animate-spin text-primary" />
+              ) : geo.latitude ? (
+                <MapPin className="h-5 w-5 text-green-600" />
+              ) : (
+                <MapPinOff className="h-5 w-5 text-primary" />
+              )}
+            </div>
+            <div className="flex-1">
+              <h4 className="text-[11px] font-black uppercase tracking-widest text-slate-400 mb-0.5">Status de Localização</h4>
+              <p className={`text-sm font-bold ${geo.latitude ? "text-green-700" : "text-primary opacity-80"}`}>
+                {geo.loading && "Sincronizando com satélite..."}
+                {!geo.loading && geo.latitude && `Presença Detectada (Precisão ±${Math.round(geo.accuracy || 0)}m)`}
+                {!geo.loading && !geo.latitude && (geo.error || "Acesso de Localização Necessário")}
+              </p>
+            </div>
+            {!geo.latitude && !geo.loading && (
+              <Button variant="outline" size="sm" onClick={() => geo.requestPosition()} className="rounded-xl border-primary/20 text-primary font-bold hover:bg-primary/5">Reativar</Button>
+            )}
+          </div>
+        </motion.div>
+
+        {/* Registration Form - Refined */}
+        <motion.div 
+          variants={itemVariants}
+          initial="hidden"
+          animate="show"
+        >
+          <Card className="border-none shadow-premium rounded-[2rem]">
+            <CardHeader className="pb-0">
+              <CardTitle className="text-[11px] font-black uppercase tracking-[0.2em] text-center text-slate-400">Terminal de Identificação</CardTitle>
+            </CardHeader>
+            <CardContent className="pt-8">
+              <form onSubmit={handleSubmit} className="space-y-6">
+                <div className="space-y-3">
+                  <Label htmlFor="matricula" className="text-[11px] font-black uppercase tracking-widest ml-1 text-slate-500">Número de Matrícula</Label>
+                  <Input
+                    id="matricula"
+                    type="text"
+                    inputMode="numeric"
+                    placeholder="Ex: 123456"
+                    className="h-14 rounded-2xl border-slate-200 bg-slate-50/50 focus:bg-white focus:ring-primary/20 transition-all text-lg font-bold"
+                    value={matricula}
+                    onChange={(e) => setMatricula(e.target.value)}
+                    disabled={isSubmitting}
+                    autoComplete="off"
+                  />
+                </div>
+                <div className="space-y-3">
+                  <Label htmlFor="senha" className="text-[11px] font-black uppercase tracking-widest ml-1 text-slate-500">Chave de Segurança</Label>
+                  <Input
+                    id="senha"
+                    type="password"
+                    placeholder="••••••••"
+                    className="h-14 rounded-2xl border-slate-200 bg-slate-50/50 focus:bg-white focus:ring-primary/20 transition-all text-lg font-bold tracking-[0.5em]"
+                    value={senhaPonto}
+                    onChange={(e) => setSenhaPonto(e.target.value)}
+                    disabled={isSubmitting}
+                    autoComplete="off"
+                  />
+                </div>
+                <Button 
+                  type="submit" 
+                  className={`w-full h-16 rounded-2xl text-base font-black uppercase tracking-widest shadow-lg transition-all active:scale-[0.98] ${
+                    status.proximaAcao === TipoRegistro.SAIDA 
+                      ? "bg-secondary hover:bg-slate-800 shadow-secondary/20" 
+                      : "bg-primary hover:bg-red-700 shadow-primary/20"
+                  }`} 
+                  disabled={isSubmitting || !status.podeRegistrar}
+                >
+                  {isSubmitting ? (
+                    <div className="flex items-center gap-3">
+                      <Loader2 className="h-5 w-5 animate-spin" />
+                      Processando...
+                    </div>
+                  ) : status.cooldown > 0 ? (
+                    `Portal travado (${status.cooldown}s)`
+                  ) : (
+                    <div className="flex items-center gap-2">
+                       Confirmar {status.proximaAcao === TipoRegistro.ENTRADA ? "Entrada" : "Saída"}
+                       <ArrowRight className="h-5 w-5" />
+                    </div>
+                  )}
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
+        </motion.div>
+
+        {lastResult && !lastResult.success && (
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="rounded-2xl bg-primary/5 border border-primary/10 p-5 flex items-start gap-4 shadow-sm"
+          >
+            <div className="p-2 bg-primary/10 rounded-xl">
+              <AlertCircle className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <h5 className="text-[11px] font-black uppercase tracking-widest text-primary mb-1">Falha na Autenticação</h5>
+              <p className="text-sm font-bold text-secondary opacity-80">{lastResult.message}</p>
+            </div>
+          </motion.div>
         )}
-      </div>
+      </motion.div>
     </AppLayout>
   );
 };

@@ -57,8 +57,10 @@ import {
 import { useOrgaos } from "@/hooks/useOrgaos";
 import { useLotacoes } from "@/hooks/useLotacoes";
 import { useUnidadesTrabalho } from "@/hooks/useUnidadesTrabalho";
+import { useFeatureFlag } from "@/hooks/useFeatureFlag";
+import { useUsuariosSistema, useLinkColaborador } from "@/hooks/useUsuariosSistema";
 import { Colaborador, ColaboradorForm } from "@/types/database";
-import { Plus, Pencil, Trash2, Users, Loader2, Eye, KeyRound, Copy, RefreshCw, ShieldCheck, ShieldX, MapPin } from "lucide-react";
+import { Plus, Pencil, Trash2, Users, Loader2, Eye, KeyRound, Copy, RefreshCw, ShieldCheck, ShieldX, MapPin, Link2 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useNavigate } from "react-router-dom";
 import { ColaboradoresFilters } from "@/components/colaboradores/ColaboradoresFilters";
@@ -112,8 +114,14 @@ const ColaboradoresPage = () => {
   const updateColaborador = useUpdateColaborador();
   const deleteColaborador = useDeleteColaborador();
   const toggleStatus = useToggleColaboradorStatus();
+  const { data: isSeparateEnabled } = useFeatureFlag("separate_user_colaborador");
+  const { data: sistemaUsers = [] } = useUsuariosSistema();
+  const linkMutation = useLinkColaborador();
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isLinkDialogOpen, setIsLinkDialogOpen] = useState(false);
+  const [colabToLink, setColabToLink] = useState<Colaborador | null>(null);
+  const [selectedUserId, setSelectedUserId] = useState<string>("");
   const [editingColaborador, setEditingColaborador] = useState<Colaborador | null>(null);
   const [formData, setFormData] = useState<ColaboradorForm>(initialFormData);
   const [searchTerm, setSearchTerm] = useState("");
@@ -639,6 +647,20 @@ const ColaboradoresPage = () => {
                             <ShieldX className="h-3 w-3 text-muted-foreground" />
                           )}
                         </Button>
+                        {isSeparateEnabled && !(colaborador as any).user_id && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              setColabToLink(colaborador);
+                              setIsLinkDialogOpen(true);
+                            }}
+                            className="flex-1 gap-1 text-primary hover:text-primary"
+                          >
+                            <Link2 className="h-4 w-4" />
+                            Vincular
+                          </Button>
+                        )}
                         <Button
                           variant="outline"
                           size="sm"
@@ -728,6 +750,20 @@ const ColaboradoresPage = () => {
                               >
                                 <KeyRound className="h-4 w-4" />
                               </Button>
+                              {isSeparateEnabled && !(colaborador as any).user_id && (
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => {
+                                    setColabToLink(colaborador);
+                                    setIsLinkDialogOpen(true);
+                                  }}
+                                  title="Vincular a Usuário do Sistema"
+                                  className="text-primary hover:text-primary hover:bg-primary/10"
+                                >
+                                  <Link2 className="h-4 w-4" />
+                                </Button>
+                              )}
                               <Button
                                 variant="ghost"
                                 size="icon"
@@ -859,6 +895,60 @@ const ColaboradoresPage = () => {
                 </DialogFooter>
               </div>
             )}
+          </DialogContent>
+        </Dialog>
+
+        {/* Link to System User Dialog */}
+        <Dialog open={isLinkDialogOpen} onOpenChange={setIsLinkDialogOpen}>
+          <DialogContent className="max-w-md mx-4">
+            <DialogHeader>
+              <DialogTitle>Vincular a Usuário do Sistema</DialogTitle>
+              <DialogDescription>
+                Selecione um usuário do painel para vincular ao colaborador <strong>{colabToLink?.nome_completo}</strong>.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label>Usuário do Sistema</Label>
+                <Select value={selectedUserId} onValueChange={setSelectedUserId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione um usuário..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {sistemaUsers.map((u) => (
+                      <SelectItem key={u.user_id} value={u.user_id}>
+                        {u.nome_completo} ({u.email})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="bg-muted p-3 rounded-md text-xs text-muted-foreground">
+                <p>O colaborador passará a usar as credenciais deste usuário para acessar o sistema.</p>
+              </div>
+            </div>
+            <DialogFooter className="flex-col sm:flex-row gap-2">
+              <Button variant="outline" onClick={() => setIsLinkDialogOpen(false)}>Cancelar</Button>
+              <Button 
+                disabled={!selectedUserId || linkMutation.isPending}
+                onClick={() => {
+                  if (colabToLink && selectedUserId) {
+                    linkMutation.mutate({ 
+                      colaboradorId: colabToLink.id, 
+                      userId: selectedUserId 
+                    }, {
+                      onSuccess: () => {
+                        setIsLinkDialogOpen(false);
+                        setSelectedUserId("");
+                      }
+                    });
+                  }
+                }}
+              >
+                {linkMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Confirmar Vínculo
+              </Button>
+            </DialogFooter>
           </DialogContent>
         </Dialog>
       </div>
