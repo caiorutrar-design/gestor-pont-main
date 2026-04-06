@@ -12,39 +12,39 @@
 
 @layer base {
   :root {
-    /* Cores principais - Azul institucional */
-    --background: 0 0% 96%;
-    --foreground: 0 0% 9%;
+    /* Cores principais - PROCON MA (Vermelho Institucional) */
+    --background: 210 20% 98%;
+    --foreground: 222 47% 11%;
 
     /* Superfícies */
-    --card: 0 0% 98%;
-    --card-foreground: 0 0% 9%;
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
 
-    --popover: 0 0% 89%;
-    --popover-foreground: 0 0% 9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
 
-    /* Cor primária - Azul institucional */
-    --primary: 243 75% 58%;
-    --primary-foreground: 225 100% 96%;
+    /* Cor primária - Vermelho #C51B29 (HSL: 355 76% 44) */
+    --primary: 355 76% 44%;
+    --primary-foreground: 0 0% 100%;
 
-    /* Secundária - Azul mais claro */
-    --secondary: 0 0% 32%;
-    --secondary-foreground: 0 0% 98%;
+    /* Secundária - Marinho Profundo #0B132B (HSL: 225 60% 11) */
+    --secondary: 225 60% 11%;
+    --secondary-foreground: 210 40% 98%;
 
     /* Elementos neutros */
-    --muted: 0 0% 63%;
-    --muted-foreground: 0 0% 9%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
 
     /* Acentos */
-    --accent: 250 100% 97%;
-    --accent-foreground: 258 89% 66%;
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
 
     /* Estados */
-    --destructive: 0 72% 50%;
-    --destructive-foreground: 0 85% 97%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
 
     /* Sucesso/Ativo */
-    --success: 142 71% 35%;
+    --success: 142 71% 45%;
     --success-foreground: 0 0% 100%;
 
     /* Alerta */
@@ -52,44 +52,31 @@
     --warning-foreground: 0 0% 100%;
 
     /* Bordas e inputs */
-    --border: 0 0% 83%;
-    --input: 0 0% 83%;
-    --ring: 243 75% 58%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 355 76% 44%;
 
-    --radius: 1.25rem;
+    --radius: 0.75rem;
 
-    /* Sidebar */
-    --sidebar-background: 212 72% 25%;
-    --sidebar-foreground: 0 0% 9%;
-    --sidebar-primary: 243 75% 58%;
-    --sidebar-primary-foreground: 225 100% 96%;
-    --sidebar-accent: 0 0% 32%;
-    --sidebar-accent-foreground: 0 0% 98%;
-    --sidebar-border: 0 0% 83%;
-    --sidebar-ring: 243 75% 58%;
+    /* Sidebar - Usando o Marinho Profundo */
+    --sidebar-background: 225 60% 11%;
+    --sidebar-foreground: 210 40% 98%;
+    --sidebar-primary: 355 76% 44%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 225 60% 15%;
+    --sidebar-accent-foreground: 210 40% 98%;
+    --sidebar-border: 225 60% 18%;
+    --sidebar-ring: 355 76% 44%;
 
-    /* Gradientes */
-    --gradient-primary: linear-gradient(135deg, hsl(212, 72%, 35%) 0%, hsl(212, 72%, 45%) 100%);
-    --gradient-header: linear-gradient(90deg, hsl(212, 72%, 28%) 0%, hsl(212, 72%, 38%) 100%);
-    --chart-1: 234 89% 73%;
-    --chart-2: 255 91% 76%;
-    --chart-3: 270 95% 75%;
-    --chart-4: 238 83% 66%;
-    --chart-5: 0 0% 45%;
-    --sidebar: 0 0% 98%;
-    --font-sans: 'Lato', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif;
-    --font-serif: 'EB Garamond', ui-serif, Georgia, Cambria, 'Times New Roman', Times, serif;
-    --font-mono: 'Fira Code', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
-    --shadow-2xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
-    --shadow-xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
-    --shadow-sm: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 1px 2px -1px hsl(0 0% 0% / 0.1);
-    --shadow: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 1px 2px -1px hsl(0 0% 0% / 0.1);
-    --shadow-md: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 2px 4px -1px hsl(0 0% 0% / 0.1);
-    --shadow-lg: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 4px 6px -1px hsl(0 0% 0% / 0.1);
-    --shadow-xl: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 8px 10px -1px hsl(0 0% 0% / 0.1);
-    --shadow-2xl: 0 1px 3px 0px hsl(0 0% 0% / 0.25);
-    --tracking-normal: 0em;
-    --spacing: 0.25rem;
+    /* Gradientes e Efeitos WOW */
+    --glass-bg: rgba(255, 255, 255, 0.7);
+    --glass-border: rgba(255, 255, 255, 0.2);
+    --gradient-primary: linear-gradient(135deg, #C51B29 0%, #E63946 100%);
+    --gradient-secondary: linear-gradient(135deg, #0B132B 0%, #1C2541 100%);
+    
+    --shadow-premium: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05), inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+    
+    --font-sans: 'Inter', 'Lato', sans-serif;
   }
 
   .dark {

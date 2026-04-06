@@ -1,9 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { calcHorasTrabalhadas } from '../../utils/calculadorasPontos';
-import { pontoDomainService } from '../../domain/ponto/services/PontoDomainService';
-import { RegistroPonto } from '../../domain/ponto/entities/RegistroPonto';
-import { TipoRegistro } from '../../domain/ponto/types';
-import { RegistroPonto as LegacyRegistroPonto } from '@/hooks/useRegistrosPonto';
+import { calcHorasTrabalhadas } from '@/utils/calculadorasPontos';
+import { pontoDomainService } from '@/domain/ponto/services/PontoDomainService';
+import { RegistroPonto } from '@/domain/ponto/entities/RegistroPonto';
+import { TipoRegistro } from '@/domain/ponto/types';
+import { Tables } from '@/integrations/supabase/types';
+
+type LegacyRegistroPonto = Tables<'registros_ponto'>;
 
 describe('QA: Paridade de Motores de Cálculo (Old vs New)', () => {
     const colabId = 'colab-qa';

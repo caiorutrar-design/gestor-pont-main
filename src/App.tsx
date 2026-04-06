@@ -17,13 +17,14 @@ const Orgaos = lazy(() => import("./pages/Orgaos"));
 const UnidadesTrabalho = lazy(() => import("./pages/UnidadesTrabalho"));
 const RegistroPonto = lazy(() => import("./pages/RegistroPonto"));
 const GerenciarPontos = lazy(() => import("./pages/GerenciarPontos"));
-const GerenciamentoUsuarios = lazy(() => import("./pages/GerenciamentoUsuarios"));
+const UsuariosSistema = lazy(() => import("./pages/UsuariosSistema"));
 const LogsAuditoria = lazy(() => import("./pages/LogsAuditoria"));
 const GestaoRH = lazy(() => import("./pages/GestaoRH"));
 const DossieColaborador = lazy(() => import("./pages/DossieColaborador"));
 const MeuPonto = lazy(() => import("./pages/MeuPonto"));
 const Login = lazy(() => import("./pages/Login"));
 const Cadastro = lazy(() => import("./pages/Cadastro"));
+const Relatorios = lazy(() => import("./pages/Relatorios"));
 const DashboardConfig = lazy(() => import("./pages/DashboardConfig"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
@@ -63,6 +64,7 @@ const App = () => (
               <Route path="/cadastro" element={<Cadastro />} />
               <Route path="/meu-ponto" element={<ColaboradorRoute><MeuPonto /></ColaboradorRoute>} />
               <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+              <Route path="/relatorios" element={<AdminOrSuperRoute><Relatorios /></AdminOrSuperRoute>} />
               <Route path="/registro-ponto" element={<ProtectedRoute><RegistroPonto /></ProtectedRoute>} />
               <Route path="/colaboradores" element={<AdminOrSuperRoute><Colaboradores /></AdminOrSuperRoute>} />
               <Route path="/orgaos" element={<AdminOrSuperRoute><Orgaos /></AdminOrSuperRoute>} />
@@ -71,7 +73,7 @@ const App = () => (
               <Route path="/logs-auditoria" element={<AdminOrSuperRoute><LogsAuditoria /></AdminOrSuperRoute>} />
               <Route path="/gestao-rh" element={<ProtectedRoute><GestaoRH /></ProtectedRoute>} />
               <Route path="/dossie/:id" element={<ProtectedRoute><DossieColaborador /></ProtectedRoute>} />
-              <Route path="/gerenciar-usuarios" element={<SuperAdminRoute><GerenciamentoUsuarios /></SuperAdminRoute>} />
+              <Route path="/gerenciar-usuarios" element={<SuperAdminRoute><UsuariosSistema /></SuperAdminRoute>} />
               <Route path="/admin/dashboard-config" element={<SuperAdminRoute><DashboardConfig /></SuperAdminRoute>} />
               <Route path="*" element={<NotFound />} />
             </Routes>

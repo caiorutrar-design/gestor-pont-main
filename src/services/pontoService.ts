@@ -23,15 +23,16 @@ export const pontoService = {
     return data;
   },
 
-  async getHistory(filters: { colaboradorId?: string; dataInicio?: string; dataFim?: string }): Promise<RegistroPonto[]> {
+  async getHistory(filters: { colaboradorId?: string; dataInicio?: string; dataFim?: string; orgaoId?: string }): Promise<RegistroPonto[]> {
     let query = supabase
       .from("registros_ponto")
-      .select("*")
+      .select("*, colaborador:colaboradores(nome_completo, matricula), orgao:orgaos(nome)")
       .order("timestamp_registro", { ascending: false });
 
     if (filters.colaboradorId) query = query.eq("colaborador_id", filters.colaboradorId);
     if (filters.dataInicio) query = query.gte("data_registro", filters.dataInicio);
     if (filters.dataFim) query = query.lte("data_registro", filters.dataFim);
+    if (filters.orgaoId) query = query.eq("orgao_id", filters.orgaoId);
 
     const { data, error } = await query;
     if (error) throw new Error(`Falha ao buscar histórico: ${error.message}`);
@@ -40,10 +41,19 @@ export const pontoService = {
       id: row.id,
       colaborador_id: row.colaborador_id,
       orgao_id: (row as any).orgao_id || "",
+      unidade_trabalho_id: (row as any).unidade_trabalho_id || undefined,
       timestamp_registro: new Date(row.timestamp_registro),
+      hora_registro: (row as any).hora_registro || undefined,
       tipo: row.tipo as TipoRegistro,
       latitude: row.latitude || undefined,
-      longitude: row.longitude || undefined
+      longitude: row.longitude || undefined,
+      colaborador: row.colaborador ? {
+        nome_completo: (row.colaborador as any).nome_completo,
+        matricula: (row.colaborador as any).matricula
+      } : undefined,
+      orgao: row.orgao ? {
+        nome: (row.orgao as any).nome
+      } : undefined
     }));
   },
 

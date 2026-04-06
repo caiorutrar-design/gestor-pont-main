@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -10,11 +10,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Settings2, BarChart3, LineChart, Layout, Save, Info, ExternalLink, ShieldCheck, Database } from "lucide-react";
+import { Settings2, BarChart3, Layout, Save, Info, ExternalLink, ShieldCheck, Database } from "lucide-react";
 
 const DashboardConfig = () => {
   const { toast } = useToast();
-  const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   
   // Dashboard card toggles
@@ -34,20 +33,15 @@ const DashboardConfig = () => {
     embedUrl: ""
   });
 
-  useEffect(() => {
-    fetchConfigs();
-  }, []);
-
-  const fetchConfigs = async () => {
-    setLoading(true);
+  const fetchConfigs = useCallback(async () => {
     try {
-      const { data, error } = await (supabase as any)
+      const { data } = await (supabase as any)
         .from('dashboard_settings')
         .select('*')
         .single();
       
       if (data) {
-        setCards(data.enabled_cards as any);
+        setCards(data.enabled_cards || { colaboradores: true, orgaos: true, pontos: true });
         setPeriod(data.default_period || "hoje");
         setPbi({
           enabled: data.powerbi_enabled || false,
@@ -57,16 +51,18 @@ const DashboardConfig = () => {
         });
       }
     } catch (e) {
-      console.error(e);
-    } finally {
-      setLoading(false);
+      console.error("Erro ao carregar configurações:", e);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchConfigs();
+  }, [fetchConfigs]);
 
   const handleSave = async () => {
     setSaving(true);
     try {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('dashboard_settings')
         .upsert({
           id: '00000000-0000-0000-0000-000000000001',
@@ -83,12 +79,12 @@ const DashboardConfig = () => {
       
       toast({
         title: "Sucesso!",
-        description: "Configurações salvas com sucesso no banco de dados.",
+        description: "Configurações salvas com sucesso.",
       });
-    } catch (error: any) {
+    } catch (err: any) {
       toast({
         title: "Erro ao salvar",
-        description: error.message,
+        description: err.message,
         variant: "destructive",
       });
     } finally {
@@ -291,7 +287,7 @@ const DashboardConfig = () => {
                           </li>
                         </ul>
                         <div className="mt-8 pt-4 border-t border-white/10 flex justify-end">
-                           <a href="https://learn.microsoft.com/en-us/power-bi/developer/embedded/embed-sample-for-customers" target="_blank" className="text-[10px] text-[#F2C811] flex items-center gap-1 hover:underline">
+                           <a href="https://learn.microsoft.com/en-us/power-bi/developer/embedded/embed-sample-for-customers" target="_blank" rel="noopener noreferrer" className="text-[10px] text-[#F2C811] flex items-center gap-1 hover:underline">
                              Documentação API <ExternalLink className="h-3 w-3" />
                            </a>
                         </div>

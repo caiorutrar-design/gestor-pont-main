@@ -22,10 +22,14 @@ export class RegistroPonto {
   get id(): string | undefined { return this.props.id; }
   get colaborador_id(): string { return this.props.colaborador_id; }
   get orgao_id(): string { return this.props.orgao_id; }
+  get unidade_trabalho_id(): string | undefined { return this.props.unidade_trabalho_id; }
   get timestamp_registro(): Date { return this.props.timestamp_registro; }
+  get hora_registro(): string | undefined { return this.props.hora_registro; }
   get tipo(): TipoRegistro { return this.props.tipo; }
   get latitude(): number | undefined { return this.props.latitude; }
   get longitude(): number | undefined { return this.props.longitude; }
+  get colaborador(): { nome_completo: string; matricula: string } | undefined { return this.props.colaborador; }
+  get orgao(): { nome: string } | undefined { return this.props.orgao; }
 
   /**
    * Helper para verificar se este ponto é do mesmo tipo de outro

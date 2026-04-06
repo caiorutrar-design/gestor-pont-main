@@ -1,6 +1,6 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { AppLayout } from "@/components/layout/AppLayout";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -13,11 +13,12 @@ import { useFrequenciaMensal } from "@/hooks/useFrequenciaMensal";
 import { useAbonos } from "@/hooks/useAbonos";
 import { useJustificativas } from "@/hooks/useJustificativas";
 import { useFerias } from "@/hooks/useFerias";
-import { Loader2, ArrowLeft, User, Clock, FileText, Calendar, CheckCircle, TrendingUp } from "lucide-react";
+import { Loader2, ArrowLeft, User, Clock, FileText, Calendar, CheckCircle } from "lucide-react";
 import { format, parseISO, differenceInMinutes, startOfMonth } from "date-fns";
 import { useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
+import { RegistroPonto } from "@/domain/ponto/entities/RegistroPonto";
 
 const tipoFeriasLabels: Record<string, string> = {
   ferias_anuais: "Férias Anuais",
@@ -60,12 +61,12 @@ const DossieColaboradorPage = () => {
     staleTime: 5 * 60 * 1000, // Logs mudam lentamente
   });
 
-  const calcHoras = (regs: typeof registros) => {
-    const sorted = [...regs].sort((a, b) => a.timestamp_registro.localeCompare(b.timestamp_registro));
+  const calcHoras = (regs: RegistroPonto[]) => {
+    const sorted = [...regs].sort((a, b) => a.timestamp_registro.getTime() - b.timestamp_registro.getTime());
     let total = 0;
     for (let i = 0; i < sorted.length - 1; i += 2) {
       if (sorted[i].tipo === "entrada" && sorted[i + 1]?.tipo === "saida") {
-        total += differenceInMinutes(parseISO(sorted[i + 1].timestamp_registro), parseISO(sorted[i].timestamp_registro));
+        total += differenceInMinutes(sorted[i + 1].timestamp_registro, sorted[i].timestamp_registro);
       }
     }
     return `${Math.floor(total / 60)}h${(total % 60).toString().padStart(2, "0")}m`;
@@ -73,9 +74,9 @@ const DossieColaboradorPage = () => {
 
   // Group registros by date
   const registrosByDate = useMemo(() => {
-    const map = new Map<string, typeof registros>();
+    const map = new Map<string, RegistroPonto[]>();
     registros.forEach((r) => {
-      const key = r.data_registro;
+      const key = format(r.timestamp_registro, "yyyy-MM-dd");
       if (!map.has(key)) map.set(key, []);
       map.get(key)!.push(r);
     });
@@ -205,7 +206,7 @@ const DossieColaboradorPage = () => {
                           <TableCell>{format(parseISO(data), "dd/MM/yyyy")}</TableCell>
                           <TableCell>
                             <div className="flex flex-wrap gap-1">
-                              {regs.sort((a, b) => a.timestamp_registro.localeCompare(b.timestamp_registro)).map((r) => (
+                              {regs.sort((a, b) => a.timestamp_registro.getTime() - b.timestamp_registro.getTime()).map((r) => (
                                 <span key={r.id} className={`text-xs px-1.5 py-0.5 rounded ${r.tipo === "entrada" ? "bg-green-100 text-green-800" : "bg-orange-100 text-orange-800"}`}>
                                   {r.hora_registro?.substring(0, 5)} ({r.tipo === "entrada" ? "E" : "S"})
                                 </span>

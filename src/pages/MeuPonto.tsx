@@ -12,14 +12,16 @@ import { useGeolocation } from "@/hooks/useGeolocation";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
-  Clock, LogOut, LogIn, ArrowRightFromLine, Loader2, CalendarDays, ChevronLeft, ChevronRight, MapPin, MapPinOff,
+  Clock, LogOut, LogIn, ArrowRightFromLine, Loader2, CalendarDays, ChevronLeft, ChevronRight,
 } from "lucide-react";
-import { format, startOfMonth, endOfMonth, subMonths, addMonths, parseISO, differenceInMinutes } from "date-fns";
+import { format, startOfMonth, endOfMonth, subMonths, addMonths, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { pontoDomainService } from "@/domain/ponto/services/PontoDomainService";
 import { RegistroPonto } from "@/domain/ponto/entities/RegistroPonto";
 import { TipoRegistro } from "@/domain/ponto/types";
 import { usePontoStatus } from "@/hooks/usePontoStatus";
+
+import { PontoClock, GeolocationStatus, PontoStats } from "./meu-ponto/components";
 
 const MeuPontoPage = () => {
   const navigate = useNavigate();
@@ -63,6 +65,7 @@ const MeuPontoPage = () => {
   // Request geolocation on mount
   useEffect(() => {
     geo.requestPosition();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Real-time clock
@@ -80,7 +83,6 @@ const MeuPontoPage = () => {
   const nextTipo = !lastRecord || lastRecord.tipo === "saida" ? "entrada" : "saida";
   const isEntrada = nextTipo === "entrada";
 
-  // Calculate today's worked hours dynamically (no fixed target)
   // Calculate today's worked hours using Domain Service
   const workedTime = useMemo(() => {
     const entities = todaySorted.map(r => new RegistroPonto({
@@ -90,7 +92,7 @@ const MeuPontoPage = () => {
         timestamp_registro: new Date(r.timestamp_registro)
     }));
     return pontoDomainService.calcularHorasTrabalhadas(entities);
-  }, [todaySorted, currentTime]); // Incluímos currentTime pois o cálculo dinâmico (em aberto) depende do 'agora'
+  }, [todaySorted]); // Removido currentTime - cálculo é estático para registros passados
 
   const workedH = Math.floor(workedTime.totalMinutos / 60);
   const workedM = workedTime.totalMinutos % 60;
@@ -102,11 +104,10 @@ const MeuPontoPage = () => {
     try {
       const position = await geo.requestPosition();
 
-      // Chamada via Edge Function (Seguindo novo padrão seguro)
       const { data, error } = await supabase.functions.invoke("registrar-ponto", {
         body: {
             matricula: colaborador.matricula,
-            senha_ponto: colaborador.senha_ponto, // Assumindo disponibilidade no context ou prompt
+            senha_ponto: colaborador.senha_ponto,
             latitude: position?.latitude ?? geo.latitude ?? null,
             longitude: position?.longitude ?? geo.longitude ?? null,
         }
@@ -143,10 +144,16 @@ const MeuPontoPage = () => {
   if (!colaborador) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background p-4">
-        <Card className="max-w-md w-full">
-          <CardContent className="py-8 text-center space-y-4">
-            <p className="text-muted-foreground">Sua conta não está vinculada a nenhum colaborador.</p>
-            <Button onClick={handleSignOut} variant="outline">Sair</Button>
+        <Card className="max-w-md w-full border-none shadow-xl">
+          <CardContent className="py-12 text-center space-y-6">
+            <div className="bg-amber-100 p-4 rounded-full w-20 h-20 flex items-center justify-center mx-auto">
+              <LogOut className="h-10 w-10 text-amber-600" />
+            </div>
+            <div className="space-y-2">
+              <h3 className="text-xl font-bold text-slate-800">Colaborador não localizado</h3>
+              <p className="text-slate-500 text-sm">Sua conta não está vinculada a nenhum colaborador ativo no sistema.</p>
+            </div>
+            <Button onClick={handleSignOut} variant="secondary" className="w-full">Sair e Tentar Novamente</Button>
           </CardContent>
         </Card>
       </div>
@@ -158,44 +165,23 @@ const MeuPontoPage = () => {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="sticky top-0 z-30 border-b bg-card px-4 py-3">
+      <header className="sticky top-0 z-30 border-b bg-card px-4 py-3 shadow-sm">
         <div className="max-w-lg mx-auto flex items-center justify-between">
           <div className="min-w-0 flex-1">
-            <p className="font-semibold text-foreground truncate">{colaborador.nome_completo}</p>
-            <p className="text-xs text-muted-foreground">Matrícula: {colaborador.matricula}</p>
+            <p className="font-bold text-foreground truncate">{colaborador.nome_completo}</p>
+            <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-semibold">Matrícula: {colaborador.matricula}</p>
           </div>
-          <Button variant="ghost" size="sm" onClick={handleSignOut} className="gap-1 shrink-0">
-            <LogOut className="h-4 w-4" /> Sair
+          <Button variant="ghost" size="sm" onClick={handleSignOut} className="gap-2 shrink-0 text-slate-500 hover:text-destructive hover:bg-destructive/5 transition-colors" aria-label="Sair">
+            <LogOut className="h-4 w-4" aria-hidden="true" /> <span className="hidden sm:inline">Sair</span>
           </Button>
         </div>
       </header>
 
-      <div className="max-w-lg mx-auto p-4 space-y-5">
-        {/* Clock */}
-        <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-primary/10">
-          <CardContent className="flex flex-col items-center py-6">
-            <Clock className="h-6 w-6 text-primary mb-1" />
-            <p className="text-4xl sm:text-5xl font-mono font-bold text-foreground tracking-wider">
-              {currentTime.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
-            </p>
-            <p className="text-sm text-muted-foreground mt-1">
-              {currentTime.toLocaleDateString("pt-BR", { weekday: "long", day: "2-digit", month: "long", year: "numeric" })}
-            </p>
-          </CardContent>
-        </Card>
+      <div className="max-w-lg mx-auto p-4 space-y-5 pb-24">
+        <PontoClock currentTime={currentTime} />
+        <GeolocationStatus geo={geo} />
+        <PontoStats workedH={workedH} workedM={workedM} />
 
-        {/* Geolocation Status */}
-        <div className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs ${geo.latitude ? "bg-green-500/10 text-green-700" : geo.error ? "bg-destructive/10 text-destructive" : "bg-muted text-muted-foreground"}`}>
-          {geo.loading ? (
-            <><Loader2 className="h-3 w-3 animate-spin" /><span>Obtendo localização...</span></>
-          ) : geo.latitude ? (
-            <><MapPin className="h-3 w-3" /><span>Localização ativa ({geo.accuracy ? `±${Math.round(geo.accuracy)}m` : ""})</span></>
-          ) : (
-            <><MapPinOff className="h-3 w-3" /><span>{geo.error || "Localização indisponível"}</span></>
-          )}
-        </div>
-
-        {/* Main Action Button */}
         <Button
           size="lg"
           onClick={handleRegistrar}

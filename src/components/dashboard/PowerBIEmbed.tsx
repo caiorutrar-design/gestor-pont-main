@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { PowerBIEmbed } from 'powerbi-client-react';
-import { models, Report } from 'powerbi-client';
+import { models, service } from 'powerbi-client';
 import { Loader2, AlertCircle } from 'lucide-react';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 
 interface PBIEmbedProps {
@@ -66,16 +66,16 @@ const PBIReport: React.FC<PBIEmbedProps> = ({ embedUrl, reportId, className, acc
           eventHandlers={
             new Map([
               ['loaded', () => setLoading(false)],
-              ['rendered', () => console.log('Report rendered')],
-              ['error', (event) => {
-                console.error(event?.detail);
+              ['rendered', () => { /* Renderizado com sucesso */ }],
+              ['error', (event?: service.ICustomEvent<any>) => {
+                if (event) console.error("PowerBI Error:", event.detail);
                 setError('Verifique se as permissões e o Token de acesso estão corretos.');
                 setLoading(false);
               }],
             ])
           }
           cssClassName={"w-full h-full"}
-          getEmbeddedComponent={(embeddedReport) => {
+          getEmbeddedComponent={() => {
              // Use embeddedReport for custom interactions
           }}
         />

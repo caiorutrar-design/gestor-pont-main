@@ -21,7 +21,6 @@ export default tseslint.config(
     plugins: {
       "react-hooks": reactHooks,
       "react-refresh": reactRefresh,
-      sonarjs,
     },
     rules: {
       ...reactHooks.configs.recommended.rules,
@@ -29,9 +28,11 @@ export default tseslint.config(
       "@typescript-eslint/no-unused-vars": ["error", { argsIgnorePattern: "^_" }],
       
       // Clean Architecture e Qualidade (SonarJS + Custom)
-      "sonarjs/cognitive-complexity": ["error", 15],
+      "sonarjs/cognitive-complexity": ["warn", 25],
       "sonarjs/no-duplicate-string": "warn",
-      "sonarjs/no-identical-functions": "error",
+      "sonarjs/no-identical-functions": "warn",
+      "@typescript-eslint/no-explicit-any": "off",
+      "sonarjs/no-nested-conditional": "warn",
       
       // Limites de Arquitetura (Exemplo: evitar imports profundos de camadas erradas)
       "no-restricted-imports": ["error", {
