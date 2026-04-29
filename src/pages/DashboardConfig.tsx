@@ -301,7 +301,7 @@ const DashboardConfig = () => {
                 )}
               </CardContent>
               <CardFooter className="bg-slate-50 border-t border-slate-200 p-6 flex justify-between items-center text-slate-400">
-                <span className="text-[10px] uppercase font-bold tracking-widest">PROCON MA • v3.0.0</span>
+                <span className="text-[10px] uppercase font-bold tracking-widest">SIF SAÚDE E PERFORMANCE MA • v3.0.0</span>
                 <span className="text-[10px] italic">Powered by Microsoft Azure & Power BI Embedded</span>
               </CardFooter>
             </Card>

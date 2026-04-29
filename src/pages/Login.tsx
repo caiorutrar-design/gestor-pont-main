@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, FileText } from "lucide-react";
+import { Loader2, Clock } from "lucide-react";
 import {
   Form,
   FormControl,
@@ -98,31 +98,25 @@ const LoginPage = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/5 via-background to-secondary/5 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/5 via-background to-secondary/5 p-4 dark:bg-[#0f172a]">
       <div className="w-full max-w-md">
-        <div className="bg-card rounded-xl shadow-lg border p-6 sm:p-8">
+        <div className="bg-card rounded-xl shadow-lg border p-6 sm:p-8 dark:bg-[#1e293b] dark:border-slate-700">
           <div className="flex flex-col items-center mb-6 sm:mb-8">
+            
             <div className="mb-6 transform transition-transform hover:scale-105 duration-300">
-              <div className="bg-white p-2 rounded-lg shadow-md border border-slate-100">
-                <img 
-                  src="/logo-gov-ma.png" 
-                  alt="Governo do Maranhão" 
-                  className="h-12 object-contain"
-                />
+              <div className="bg-slate-100 dark:bg-slate-800 p-3 rounded-lg shadow-md border border-slate-200 dark:border-slate-700">
+                <Clock className="h-10 w-10 text-primary" />
               </div>
             </div>
             
             <div className="flex flex-col items-center mb-2">
-              <h1 className="font-['Montserrat'] font-[900] text-[#C51B29] text-4xl leading-none tracking-tighter">
-                PROCON
+              <h1 className="font-bold text-2xl sm:text-3xl text-foreground dark:text-slate-100 tracking-tight">
+                SIF SAÚDE E PERFORMANCE
               </h1>
-              <span className="font-['Montserrat'] font-bold text-[#C51B29] text-xl tracking-[0.2em] -mt-1 opacity-80">
-                MA
-              </span>
             </div>
             
-            <p className="text-sm font-medium text-slate-500 mt-2 text-center">
-              Sistema de Gestão de Frequência
+            <p className="text-sm font-medium text-muted-foreground mt-2 text-center">
+              Gestão de Frequência
             </p>
           </div>
 

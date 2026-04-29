@@ -24,7 +24,7 @@ export const exportToPDF = (
   doc.setFont("helvetica", "bold");
   doc.setFontSize(14);
   const title = "RELATÓRIO DE PONTO / CONTROLE DE JORNADA";
-  const empresa = orgaoNome ? `ÓRGÃO: ${orgaoNome.toUpperCase()}` : "ESTADO DO MARANHÃO - PROCON MA";
+  const empresa = orgaoNome ? `ÓRGÃO: ${orgaoNome.toUpperCase()}` : "ESTADO DO MARANHÃO - SIF SAÚDE E PERFORMANCE MA";
   
   doc.text(empresa, 40, 40);
   doc.setFontSize(12);

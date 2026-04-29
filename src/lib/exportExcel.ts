@@ -51,7 +51,7 @@ export const exportarFolhaPontoExcel = async (colaborador: ColaboradorPontos) =>
 
   // CABEÇALHO
   sheet.mergeCells('A1:I1');
-  sheet.getCell('A1').value = 'ESTADO DO MARANHÃO\nINSTITUTO DE PROMOÇÃO E DEFESA DO CIDADÃO E CONSUMIDOR DO ESTADO DO MARANHÃO PROCON MA\nFOLHA INDIVIDUAL DE FREQUÊNCIA\nÓRGÃO PROCON';
+  sheet.getCell('A1').value = 'ESTADO DO MARANHÃO\nINSTITUTO DE PROMOÇÃO E DEFESA DO CIDADÃO E CONSUMIDOR DO ESTADO DO MARANHÃO SIF SAÚDE E PERFORMANCE MA\nFOLHA INDIVIDUAL DE FREQUÊNCIA\nÓRGÃO SIF SAÚDE E PERFORMANCE';
   sheet.getCell('A1').font = { name: 'Arial', size: 10, bold: true };
   sheet.getCell('A1').alignment = alignmentCenter;
   sheet.getRow(1).height = 60;

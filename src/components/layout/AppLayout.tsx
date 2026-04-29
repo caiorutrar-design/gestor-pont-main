@@ -61,7 +61,6 @@ export function AppLayout({ children }: AppLayoutProps) {
   const { isAdmin, isSuperAdmin, isGestor, role } = useIsAdmin();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  // Filtragem estrita dos grupos com base nos papéis
   const visibleGroups = navGroups.map(group => ({
     ...group,
     items: group.items.filter((item) => {
@@ -82,8 +81,7 @@ export function AppLayout({ children }: AppLayoutProps) {
   const RoleIcon = role === "super_admin" ? ShieldCheck : Shield;
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      {/* Mobile Overlay */}
+    <div className="min-h-screen bg-slate-100 dark:bg-[#0f172a]">
       {sidebarOpen && (
         <div
           className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm lg:hidden transition-all"
@@ -91,49 +89,41 @@ export function AppLayout({ children }: AppLayoutProps) {
         />
       )}
 
-      {/* Sidebar Oficial Governo PROCON (#0E1B2B Azul Noturno, #C51B29 Vermelho) */}
+      {/* Sidebar - Dark Theme */}
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-50 w-72 transform bg-[#0B132B] border-r border-slate-800 flex flex-col transition-transform duration-300 ease-in-out lg:translate-x-0 overflow-hidden shadow-2xl",
+          "fixed inset-y-0 left-0 z-50 w-72 transform bg-[#0f172a] border-r border-slate-800 flex flex-col transition-transform duration-300 ease-in-out lg:translate-x-0 overflow-hidden shadow-2xl",
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
-        {/* Logos Header con Fondo Rojo (Estilo Foto) */}
-        <div className="flex flex-col items-center justify-center p-6 bg-[#C51B29] relative shadow-[0_4px_20px_rgba(0,0,0,0.3)]">
+        {/* Header Sidebar */}
+        <div className="flex flex-col items-center justify-center p-6 bg-[#1e293b] border-b border-slate-800 relative shadow-[0_4px_20px_rgba(0,0,0,0.3)]">
           <Button
             variant="ghost" size="icon"
-            className="lg:hidden absolute top-4 right-4 text-white/70 hover:text-white hover:bg-white/10"
+            className="lg:hidden absolute top-4 right-4 text-slate-400 hover:text-white hover:bg-slate-800"
             onClick={() => setSidebarOpen(false)}
           >
             <X className="h-5 w-5" />
           </Button>
 
           <div className="space-y-4 w-full flex flex-col items-center pt-2">
-            {/* Logo Gobierno del Estado - Encima */}
-            <div className="bg-white p-1.5 rounded-md shadow-sm">
-              <img 
-                src="/logo-gov-ma.png" 
-                alt="Governo do Maranhão" 
-                className="h-10 object-contain" 
-                onError={(e) => { e.currentTarget.style.display = 'none'; }} 
-              />
+            {/* Ícone do Relógio */}
+            <div className="bg-slate-800 p-3 rounded-lg shadow-inner border border-slate-700">
+              <Clock className="h-8 w-8 text-primary" />
             </div>
             
-            <div className="w-16 h-px bg-white/20 rounded-full" />
+            <div className="w-16 h-px bg-slate-700 rounded-full" />
             
-            {/* PROCON MA con fuente de la foto (Montserrat Black) */}
+            {/* Nome da Empresa */}
             <div className="flex flex-col items-center">
-              <h2 className="text-white font-['Montserrat'] font-[900] tracking-tighter text-3xl leading-none px-2 drop-shadow-md">
-                PROCON
+              <h2 className="text-white font-bold text-xl leading-tight px-2 text-center">
+                SIF SAÚDE E PERFORMANCE
               </h2>
-              <span className="text-white font-['Montserrat'] font-bold text-lg tracking-[0.2em] -mt-1 drop-shadow-sm opacity-90">
-                MA
-              </span>
             </div>
           </div>
         </div>
 
-        {/* Custom Scrollbar CSS for Navigation via utility classes */}
+        {/* Navigation */}
         <nav className="flex-1 overflow-y-auto overflow-x-hidden space-y-6 pt-6 pb-4 px-4 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent">
           {visibleGroups.map((group) => (
             <div key={group.label} className="animate-fade-in slide-in-from-left-4 duration-500">
@@ -150,17 +140,16 @@ export function AppLayout({ children }: AppLayoutProps) {
                         className={cn(
                           "group relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200",
                           isActive
-                            ? "bg-[#C51B29] text-white shadow-md shadow-red-900/20"
-                            : "text-slate-400 hover:bg-[#15203D] hover:text-slate-100"
+                            ? "bg-primary text-white shadow-md shadow-primary/20"
+                            : "text-slate-400 hover:bg-slate-800 hover:text-slate-100"
                         )}
                         onClick={() => setSidebarOpen(false)}
                       >
-                        {/* Indicador de Borda para Hover (Efeito Sutil) */}
                         {!isActive && (
-                          <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-0 bg-slate-500 rounded-r-md transition-all duration-300 group-hover:h-3/4 opacity-0 group-hover:opacity-100" />
+                          <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-0 bg-primary rounded-r-md transition-all duration-300 group-hover:h-3/4 opacity-0 group-hover:opacity-100" />
                         )}
                         
-                        <item.icon className={cn("h-5 w-5 transition-transform duration-300", isActive ? "scale-110" : "group-hover:scale-110 group-hover:text-blue-200")} />
+                        <item.icon className={cn("h-5 w-5 transition-transform duration-300", isActive ? "scale-110" : "group-hover:scale-110")} />
                         {item.name}
                       </Link>
                     </li>
@@ -171,10 +160,10 @@ export function AppLayout({ children }: AppLayoutProps) {
           ))}
         </nav>
 
-        {/* Elegant User Bottom Section */}
-        <div className="mt-auto p-4 bg-[#060D1F] border-t border-slate-800">
+        {/* User Section */}
+        <div className="mt-auto p-4 bg-[#0f172a] border-t border-slate-800">
           {user && (
-            <div className="rounded-xl bg-[#0B132B] p-3 border border-slate-700/50 shadow-inner mb-3 transition-colors hover:border-[#C51B29]/30">
+            <div className="rounded-xl bg-slate-800/50 p-3 border border-slate-700/50 shadow-inner mb-3 transition-colors hover:border-primary/30">
               <div className="flex items-center justify-between gap-3">
                 <div className="flex flex-col overflow-hidden">
                   <span className="text-xs font-semibold text-slate-200 truncate">{user.email?.split('@')[0]}</span>
@@ -196,7 +185,7 @@ export function AppLayout({ children }: AppLayoutProps) {
           
           <Button
             variant="ghost"
-            className="w-full justify-start gap-3 rounded-lg text-slate-400 hover:text-white hover:bg-red-500/10 hover:border-red-500/20 border border-transparent transition-all mb-2"
+            className="w-full justify-start gap-3 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 border border-transparent transition-all mb-2"
             onClick={handleSignOut}
           >
             <LogOut className="h-4 w-4" />
@@ -204,22 +193,23 @@ export function AppLayout({ children }: AppLayoutProps) {
           </Button>
           
           <div className="text-center space-y-0.5 opacity-50">
-            <p className="text-[10px] text-slate-500 font-medium">Sistema de Gestão de Ponto</p>
-            <p className="text-[9px] text-slate-600">PROCON MA • v3.0.0</p>
+            <p className="text-[10px] text-slate-500 font-medium">Gestor de Ponto</p>
+            <p className="text-[9px] text-slate-600">SIF SAÚDE E PERFORMANCE • v3.0.0</p>
           </div>
         </div>
       </aside>
 
-      {/* Main Content Area */}
+      {/* Main Content */}
       <div className="lg:pl-72 flex flex-col min-h-screen">
         {/* Mobile Header */}
-        <header className="sticky top-0 z-30 flex h-16 items-center gap-4 bg-[#C51B29] border-b border-[#A01622] px-4 lg:hidden shadow-lg">
-          <Button variant="ghost" size="icon" onClick={() => setSidebarOpen(true)} className="text-white hover:bg-white/10">
+        <header className="sticky top-0 z-30 flex h-16 items-center gap-4 bg-[#1e293b] border-b border-slate-800 px-4 lg:hidden shadow-lg">
+          <Button variant="ghost" size="icon" onClick={() => setSidebarOpen(true)} className="text-slate-300 hover:bg-slate-800">
             <Menu className="h-5 w-5" />
           </Button>
           <div className="flex items-center gap-2">
-            <h1 className="font-['Montserrat'] font-[900] text-white text-lg tracking-tighter">
-              PROCON <span className="text-white opacity-80 font-bold ml-1">MA</span>
+            <Clock className="h-5 w-5 text-primary" />
+            <h1 className="font-bold text-white text-base">
+              SIF SAÚDE E PERFORMANCE
             </h1>
           </div>
         </header>

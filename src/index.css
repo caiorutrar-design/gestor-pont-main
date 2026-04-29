@@ -1,253 +1,295 @@
-@import url("https://fonts.googleapis.com/css2?family=Lato:wght@400;700&display=swap");
-@import url("https://fonts.googleapis.com/css2?family=EB+Garamond:wght@400;500;600;700&display=swap");
-@import url("https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;700&display=swap");
+/* ============================================
+   GESTOR DE PONTO - DARK MODE v2.0
+   Professional Security Theme
+   Palette: Azul segurança + Conforto visual
+   ============================================ */
+
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Sistema de Design - Plataforma de Frequência
-   Estilo: Institucional/Governamental Brasileiro
-   Cores: Azul institucional + Cinza neutro
-*/
-
+/* Dark Mode - Professional Security Palette */
 @layer base {
   :root {
-    /* Cores principais - Azul institucional */
-    --background: 0 0% 96%;
-    --foreground: 0 0% 9%;
-
-    /* Superfícies */
-    --card: 0 0% 98%;
-    --card-foreground: 0 0% 9%;
-
-    --popover: 0 0% 89%;
-    --popover-foreground: 0 0% 9%;
-
-    /* Cor primária - Azul institucional */
-    --primary: 243 75% 58%;
-    --primary-foreground: 225 100% 96%;
-
-    /* Secundária - Azul mais claro */
-    --secondary: 0 0% 32%;
-    --secondary-foreground: 0 0% 98%;
-
-    /* Elementos neutros */
-    --muted: 0 0% 63%;
-    --muted-foreground: 0 0% 9%;
-
-    /* Acentos */
-    --accent: 250 100% 97%;
-    --accent-foreground: 258 89% 66%;
-
+    /* Backgrounds */
+    --background: 222 47% 11%;        /* #0f172a - Azul escuro profundo */
+    --foreground: 210 40% 98%;        /* #f8fafc - Off-white suave */
+    
+    /* Cards e superfícies */
+    --card: 217 33% 17%;             /* #1e293b - Azul acinzentado */
+    --card-foreground: 210 40% 98%;
+    
+    /* Popover */
+    --popover: 217 33% 17%;
+    --popover-foreground: 210 40% 98%;
+    
+    /* Primária - Azul Segurança (#3b82f6) */
+    --primary: 217 94% 60%;          /* #3b82f6 - Azul confiança */
+    --primary-foreground: 222 47% 11%;
+    
+    /* Secundária */
+    --secondary: 217 33% 22%;        /* #334155 */
+    --secondary-foreground: 210 40% 98%;
+    
+    /* Texto secundário */
+    --muted: 217 33% 22%;
+    --muted-foreground: 215 20% 58%; /* #94a3b8 - Cinza azulado */
+    
+    /* Accent - Cyan (#06b6d4) */
+    --accent: 189 86% 49%;           /* #06b6d4 - Cyan segurança */
+    --accent-foreground: 222 47% 11%;
+    
     /* Estados */
-    --destructive: 0 72% 50%;
-    --destructive-foreground: 0 85% 97%;
-
-    /* Sucesso/Ativo */
-    --success: 142 71% 35%;
-    --success-foreground: 0 0% 100%;
-
-    /* Alerta */
-    --warning: 38 92% 50%;
-    --warning-foreground: 0 0% 100%;
-
-    /* Bordas e inputs */
-    --border: 0 0% 83%;
-    --input: 0 0% 83%;
-    --ring: 243 75% 58%;
-
-    --radius: 1.25rem;
-
+    --destructive: 0 84% 60%;        /* #ef4444 - Vermelho suave */
+    --destructive-foreground: 210 40% 98%;
+    
+    /* Sucesso - Verde suave (#22c55e) */
+    --success: 142 71% 45%;          /* #22c55e */
+    --success-foreground: 222 47% 11%;
+    
+    /* Warning - Laranja suave (#f59e0b) */
+    --warning: 38 92% 50%;          /* #f59e0b */
+    --warning-foreground: 222 47% 11%;
+    
+    /* Borders e inputs */
+    --border: 217 33% 25%;           /* Bordas sutis */
+    --input: 217 33% 25%;
+    --ring: 217 94% 60%;            /* Ring azul */
+    
+    --radius: 0.75rem;
+    
     /* Sidebar */
-    --sidebar-background: 212 72% 25%;
-    --sidebar-foreground: 0 0% 9%;
-    --sidebar-primary: 243 75% 58%;
-    --sidebar-primary-foreground: 225 100% 96%;
-    --sidebar-accent: 0 0% 32%;
-    --sidebar-accent-foreground: 0 0% 98%;
-    --sidebar-border: 0 0% 83%;
-    --sidebar-ring: 243 75% 58%;
-
-    /* Gradientes */
-    --gradient-primary: linear-gradient(135deg, hsl(212, 72%, 35%) 0%, hsl(212, 72%, 45%) 100%);
-    --gradient-header: linear-gradient(90deg, hsl(212, 72%, 28%) 0%, hsl(212, 72%, 38%) 100%);
-    --chart-1: 234 89% 73%;
-    --chart-2: 255 91% 76%;
-    --chart-3: 270 95% 75%;
-    --chart-4: 238 83% 66%;
-    --chart-5: 0 0% 45%;
-    --sidebar: 0 0% 98%;
-    --font-sans: 'Lato', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif;
-    --font-serif: 'EB Garamond', ui-serif, Georgia, Cambria, 'Times New Roman', Times, serif;
-    --font-mono: 'Fira Code', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
-    --shadow-2xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
-    --shadow-xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
-    --shadow-sm: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 1px 2px -1px hsl(0 0% 0% / 0.1);
-    --shadow: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 1px 2px -1px hsl(0 0% 0% / 0.1);
-    --shadow-md: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 2px 4px -1px hsl(0 0% 0% / 0.1);
-    --shadow-lg: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 4px 6px -1px hsl(0 0% 0% / 0.1);
-    --shadow-xl: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 8px 10px -1px hsl(0 0% 0% / 0.1);
-    --shadow-2xl: 0 1px 3px 0px hsl(0 0% 0% / 0.25);
-    --tracking-normal: 0em;
-    --spacing: 0.25rem;
+    --sidebar-background: 222 47% 8%;
+    --sidebar-foreground: 210 40% 98%;
+    --sidebar-primary: 217 94% 60%;
+    --sidebar-primary-foreground: 222 47% 11%;
+    --sidebar-accent: 217 33% 22%;
+    --sidebar-accent-foreground: 210 40% 98%;
+    --sidebar-border: 217 33% 20%;
+    --sidebar-ring: 217 94% 60%;
+    
+    /* Charts - tons de azul */
+    --chart-1: 217 94% 60%;         /* Azul primário */
+    --chart-2: 189 86% 49%;          /* Cyan accent */
+    --chart-3: 280 65% 60%;         /* Roxo */
+    --chart-4: 38 92% 50%;           /* Laranja warning */
+    --chart-5: 142 71% 45%;         /* Verde sucesso */
   }
-
-  .dark {
-    --background: 0 0% 9%;
-    --foreground: 0 0% 98%;
-
-    --card: 0 0% 14%;
-    --card-foreground: 0 0% 98%;
-
-    --popover: 0 0% 25%;
-    --popover-foreground: 0 0% 98%;
-
-    --primary: 234 89% 73%;
-    --primary-foreground: 243 47% 20%;
-
-    --secondary: 0 0% 45%;
-    --secondary-foreground: 0 0% 98%;
-
-    --muted: 0 0% 45%;
-    --muted-foreground: 0 0% 98%;
-
-    --accent: 261 72% 22%;
-    --accent-foreground: 255 91% 76%;
-
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 0 85% 97%;
-
-    --success: 142 71% 40%;
-    --success-foreground: 0 0% 100%;
-
-    --warning: 38 92% 50%;
-    --warning-foreground: 0 0% 100%;
-
-    --border: 0 0% 32%;
-    --input: 0 0% 32%;
-    --ring: 234 89% 73%;
-
-    --sidebar-background: 215 25% 8%;
-    --sidebar-foreground: 0 0% 98%;
-    --sidebar-primary: 234 89% 73%;
-    --sidebar-primary-foreground: 243 47% 20%;
-    --sidebar-accent: 255 91% 76%;
-    --sidebar-accent-foreground: 261 72% 22%;
-    --sidebar-border: 0 0% 32%;
-    --sidebar-ring: 234 89% 73%;
-    --chart-1: 229 93% 81%;
-    --chart-2: 252 94% 85%;
-    --chart-3: 269 97% 85%;
-    --chart-4: 234 89% 73%;
-    --chart-5: 0 0% 45%;
-    --sidebar: 0 0% 14%;
-    --shadow-2xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
-    --shadow-xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
-    --shadow-sm: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 1px 2px -1px hsl(0 0% 0% / 0.1);
-    --shadow: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 1px 2px -1px hsl(0 0% 0% / 0.1);
-    --shadow-md: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 2px 4px -1px hsl(0 0% 0% / 0.1);
-    --shadow-lg: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 4px 6px -1px hsl(0 0% 0% / 0.1);
-    --shadow-xl: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 8px 10px -1px hsl(0 0% 0% / 0.1);
-    --shadow-2xl: 0 1px 3px 0px hsl(0 0% 0% / 0.25);
-  }
-}
-
-@layer base {
+  
   * {
     @apply border-border;
   }
-
+  
   body {
     @apply bg-background text-foreground antialiased;
-    font-feature-settings: "rlig" 1, "calt" 1;
+    font-family: 'Inter', system-ui, sans-serif;
   }
-
-  /* Tipografia institucional */
-  h1, h2, h3, h4, h5, h6 {
-    @apply font-semibold tracking-tight text-foreground;
-  }
-
-  h1 {
-    @apply text-3xl md:text-4xl;
-  }
-
-  h2 {
-    @apply text-2xl md:text-3xl;
-  }
-
-  h3 {
-    @apply text-xl md:text-2xl;
+  
+  /* Transições suaves */
+  * {
+    @apply transition-colors duration-200;
   }
 }
+
+/* ============================================
+   COMPONENTES CUSTOMIZADOS
+   ============================================ */
 
 @layer components {
-  /* Card com estilo institucional */
-  .card-institutional {
-    @apply bg-card border border-border rounded-lg shadow-sm;
+  
+  /* Cards com borda suave */
+  .card-dark {
+    @apply bg-card border border-border rounded-xl p-6;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
   }
-
-  /* Header de página */
-  .page-header {
-    @apply mb-6 pb-4 border-b border-border;
+  
+  /* Headers de seção */
+  .section-header {
+    @apply text-xl font-semibold text-foreground mb-4 pb-2 border-b border-border;
   }
-
-  /* Tabela institucional */
-  .table-institutional {
+  
+  /* Inputs escuros */
+  .input-dark {
+    @apply bg-secondary border border-input rounded-lg px-4 py-2.5 text-foreground;
+    @apply focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent;
+  }
+  
+  /* Labels claros */
+  .label-dark {
+    @apply text-sm font-medium text-muted-foreground mb-1.5 block;
+  }
+  
+  /* Botões primários - Azul Segurança */
+  .btn-primary-dark {
+    @apply bg-primary text-primary-foreground font-medium px-5 py-2.5 rounded-lg;
+    @apply hover:bg-primary/90 transition-all duration-200;
+    @apply focus:outline-none focus:ring-2 focus:ring-ring;
+  }
+  
+  /* Botões secundários */
+  .btn-secondary-dark {
+    @apply bg-secondary text-foreground font-medium px-5 py-2.5 rounded-lg;
+    @apply border border-border hover:bg-secondary/80 transition-all;
+  }
+  
+  /* Tabelas com design escuro */
+  .table-dark {
     @apply w-full border-collapse;
   }
-
-  .table-institutional th {
-    @apply bg-muted text-left px-4 py-3 text-sm font-semibold text-muted-foreground border-b border-border;
+  
+  .table-dark th {
+    @apply bg-secondary/50 text-left px-4 py-3 text-sm font-semibold text-muted-foreground border-b border-border;
   }
-
-  .table-institutional td {
-    @apply px-4 py-3 text-sm border-b border-border;
+  
+  .table-dark td {
+    @apply px-4 py-3 text-sm border-b border-border/50;
   }
-
-  .table-institutional tr:hover {
-    @apply bg-muted/50;
+  
+  .table-dark tr:hover {
+    @apply bg-secondary/30;
   }
-
-  /* Badge de status */
-  .status-active {
-    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-success/10 text-success;
+  
+  /* Badges de status - tons suaves */
+  .badge-success {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+    @apply bg-success/20 text-success;
   }
-
-  .status-inactive {
-    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-destructive/10 text-destructive;
+  
+  .badge-warning {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+    @apply bg-warning/20 text-warning;
   }
-
-  /* Botão primário com gradiente */
-  .btn-primary-gradient {
-    background: var(--gradient-primary);
-    @apply text-white font-medium px-6 py-2.5 rounded-lg shadow-md hover:shadow-lg transition-all duration-200;
+  
+  .badge-danger {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+    @apply bg-destructive/20 text-destructive;
   }
-
-  /* Header da sidebar */
-  .sidebar-header-gradient {
-    background: var(--gradient-header);
+  
+  /* Sidebar moderna */
+  .sidebar-dark {
+    @apply bg-sidebar-background border-r border-sidebar-border;
+  }
+  
+  .sidebar-item {
+    @apply flex items-center gap-3 px-4 py-2.5 rounded-lg text-sidebar-foreground;
+    @apply hover:bg-sidebar-accent transition-colors cursor-pointer;
+  }
+  
+  .sidebar-item-active {
+    @apply bg-sidebar-primary text-sidebar-primary-foreground;
+    @apply hover:bg-sidebar-primary/90;
+  }
+  
+  /* Page headers */
+  .page-header-dark {
+    @apply mb-6 pb-4 border-b border-border;
+  }
+  
+  .page-title {
+    @apply text-2xl font-bold text-foreground;
+  }
+  
+  .page-subtitle {
+    @apply text-sm text-muted-foreground mt-1;
   }
 }
 
-@layer utilities {
-  /* Animações suaves */
-  .animate-fade-in {
-    animation: fadeIn 0.3s ease-in-out;
-  }
+/* ============================================
+   UTILITÁRIOS
+   ============================================ */
 
+@layer utilities {
+  
+  /* Gradiente sutil para backgrounds */
+  .bg-gradient-dark {
+    background: linear-gradient(180deg, hsl(222, 47%, 11%) 0%, hsl(217, 33%, 17%) 100%);
+  }
+  
+  /* Glow sutil para elementos destacados */
+  .glow-blue {
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
+  }
+  
+  /* Scrollbar escura personalizada */
+  .scrollbar-dark::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  
+  .scrollbar-dark::-webkit-scrollbar-track {
+    @apply bg-background;
+  }
+  
+  .scrollbar-dark::-webkit-scrollbar-thumb {
+    @apply bg-muted rounded-full;
+  }
+  
+  .scrollbar-dark::-webkit-scrollbar-thumb:hover {
+    @apply bg-muted-foreground/50;
+  }
+}
+
+/* ============================================
+   ANIMAÇÕES
+   ============================================ */
+
+@layer utilities {
+  
+  .animate-fade-in {
+    animation: fadeIn 0.3s ease-out;
+  }
+  
   @keyframes fadeIn {
     from {
       opacity: 0;
-      transform: translateY(-10px);
+      transform: translateY(8px);
     }
     to {
       opacity: 1;
       transform: translateY(0);
     }
   }
-
-  /* Sombra institucional */
-  .shadow-institutional {
-    box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+  
+  .animate-slide-in {
+    animation: slideIn 0.3s ease-out;
   }
+  
+  @keyframes slideIn {
+    from {
+      opacity: 0;
+      transform: translateX(-10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+}
+
+/* ============================================
+   LANDING PAGE SPECIFIC
+   ============================================ */
+
+.landing-gradient {
+  background: linear-gradient(135deg, hsl(222, 47%, 11%) 0%, hsl(217, 33%, 17%) 50%, hsl(222, 47%, 11%) 100%);
+}
+
+.hero-glow {
+  box-shadow: 0 0 60px -10px rgba(59, 130, 246, 0.3);
+}
+
+.pricing-card {
+  @apply bg-card border border-border rounded-2xl p-6;
+  transition: all 0.3s ease;
+}
+
+.pricing-card:hover {
+  @apply border-primary/50;
+  box-shadow: 0 0 30px -10px rgba(59, 130, 246, 0.2);
+}
+
+.pricing-highlight {
+  @apply border-primary shadow-lg shadow-primary/10;
 }

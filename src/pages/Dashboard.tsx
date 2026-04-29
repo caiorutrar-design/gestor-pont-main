@@ -18,6 +18,19 @@ import PBIReport from "@/components/dashboard/PowerBIEmbed";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 
+// Nova paleta de cores - tema escuro profissional
+const COLORS = {
+  primary: "#3b82f6",      // Azul segurança
+  secondary: "#06b6d4",    // Cyan
+  success: "#22c55e",      // Verde
+  warning: "#f59e0b",      // Amarelo
+  danger: "#ef4444",       // Vermelho
+  background: "#0f172a",   // Azul escuro fundo
+  card: "#1e293b",         // Slate cards
+  text: "#f8fafc",        // Texto principal
+  muted: "#94a3b8",       // Texto secundário
+};
+
 const Dashboard = () => {
   const { user } = useAuth();
   const { isAdmin, isSuperAdmin, isGestor } = useIsAdmin();
@@ -52,11 +65,11 @@ const Dashboard = () => {
 
   // Mock data para Órgãos (Top 5)
   const orgaosChartData = useMemo(() => [
-    { name: "PROCON", total: 12 },
-    { name: "SEAD", total: 8 },
-    { name: "SEFAZ", total: 6 },
-    { name: "VIVA", total: 4 },
-    { name: "SEDEL", total: 3 },
+    { name: "SIF SAÚDE E PERFORMANCE", total: 12, fill: COLORS.primary },
+    { name: "SEAD", total: 8, fill: COLORS.secondary },
+    { name: "SEFAZ", total: 6, fill: COLORS.success },
+    { name: "VIVA", total: 4, fill: COLORS.warning },
+    { name: "SEDEL", total: 3, fill: COLORS.primary },
   ], []);
 
   // Mock data para Evolução de Pontos (Registros hoje por turno/hora)
@@ -71,8 +84,8 @@ const Dashboard = () => {
 
   // Data para Ativos vs Inativos
   const statusChartData = useMemo(() => [
-    { name: "Ativos", value: colaboradoresAtivos, fill: "#0B132B" },
-    { name: "Inativos", value: colaboradoresInativos, fill: "#E2E8F0" },
+    { name: "Ativos", value: colaboradoresAtivos, fill: COLORS.success },
+    { name: "Inativos", value: colaboradoresInativos, fill: COLORS.muted },
   ], [colaboradoresAtivos, colaboradoresInativos]);
 
   // Count unique colaboradores who registered today
@@ -80,20 +93,29 @@ const Dashboard = () => {
     return new Set(registrosHoje.map((r) => r.colaborador_id)).size;
   }, [registrosHoje]);
 
+  // Custom tooltip style for dark theme
+  const tooltipStyle = {
+    backgroundColor: COLORS.card,
+    border: `1px solid ${COLORS.muted}`,
+    borderRadius: '8px',
+    color: COLORS.text,
+    fontSize: '12px',
+  };
+
   return (
     <AppLayout>
       <div className="space-y-8 animate-fade-in">
         <div className="page-header flex flex-col md:flex-row md:items-end justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-[#0B132B] md:text-3xl">
+            <h1 className="text-2xl font-bold text-slate-100 md:text-3xl">
               {isSuperAdmin ? "Painel do Super Administrador" : isAdmin ? "Painel do RH" : isGestor ? "Painel do Gestor" : "Meu Painel"}
             </h1>
-            <p className="text-muted-foreground mt-1 text-sm md:text-base">
+            <p className="text-slate-400 mt-1 text-sm md:text-base">
               {isAdmin ? "Gerencie colaboradores e registros de ponto" : isGestor ? "Acompanhe os registros da sua equipe" : `Bem-vindo, ${user?.email}`}
             </p>
           </div>
           {configs?.powerbi_enabled && (
-             <Badge variant="outline" className="bg-yellow-500/10 text-yellow-600 border-yellow-200 gap-1 px-3 py-1 animate-pulse">
+             <Badge variant="outline" className="bg-blue-500/10 text-blue-400 border-blue-500/30 gap-1 px-3 py-1">
                <Database className="h-3 w-3" /> BI INTEGRADO
              </Badge>
           )}
@@ -101,13 +123,13 @@ const Dashboard = () => {
 
         {(isAdmin || isGestor) && (
           <Tabs defaultValue="overview" className="space-y-6">
-            <div className="flex items-center justify-between border-b border-slate-200 pb-1">
+            <div className="flex items-center justify-between border-b border-slate-700 pb-1">
               <TabsList className="bg-transparent h-auto p-0 gap-6">
-                <TabsTrigger value="overview" className="border-b-2 border-transparent data-[state=active]:border-[#C51B29] rounded-none bg-transparent px-0 py-2 font-semibold text-slate-500 data-[state=active]:text-[#0B132B] transition-all">
+                <TabsTrigger value="overview" className="border-b-2 border-transparent data-[state=active]:border-primary rounded-none bg-transparent px-0 py-2 font-semibold text-slate-400 data-[state=active]:text-primary transition-all">
                   <Layout className="h-4 w-4 mr-2" /> Visão Geral
                 </TabsTrigger>
                 {configs?.powerbi_enabled && (
-                  <TabsTrigger value="powerbi" className="border-b-2 border-transparent data-[state=active]:border-[#C51B29] rounded-none bg-transparent px-0 py-2 font-semibold text-slate-500 data-[state=active]:text-[#0B132B] transition-all">
+                  <TabsTrigger value="powerbi" className="border-b-2 border-transparent data-[state=active]:border-primary rounded-none bg-transparent px-0 py-2 font-semibold text-slate-400 data-[state=active]:text-primary transition-all">
                     <Database className="h-4 w-4 mr-2" /> Power BI Reports
                   </TabsTrigger>
                 )}
@@ -118,17 +140,17 @@ const Dashboard = () => {
               {/* Stats Cards */}
               <div className="grid gap-4 md:grid-cols-3">
                 {(!configs || configs.enabled_cards?.colaboradores) && (
-                  <Card className="card-institutional border-t-4 border-t-[#0B132B] shadow-md">
+                  <Card className="bg-slate-800/50 border-slate-700 border-t-4 border-t-primary shadow-lg">
                     <CardHeader className="flex flex-row items-center justify-between pb-2">
-                      <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-tight">Colaboradores Ativos</CardTitle>
-                      <div className="rounded-lg p-2 bg-[#0B132B]/5">
-                        <Users className="h-4 w-4 text-[#0B132B]" />
+                      <CardTitle className="text-sm font-medium text-slate-400 uppercase tracking-tight">Colaboradores Ativos</CardTitle>
+                      <div className="rounded-lg p-2 bg-primary/10">
+                        <Users className="h-4 w-4 text-primary" />
                       </div>
                     </CardHeader>
                     <CardContent>
                       <div className="flex items-end justify-between mb-4">
                         <div>
-                          <div className="text-3xl font-bold text-[#0B132B]">{colaboradoresAtivos}</div>
+                          <div className="text-3xl font-bold text-slate-100">{colaboradoresAtivos}</div>
                           <p className="text-[10px] text-slate-500 mt-1 uppercase font-bold tracking-wider">{colaboradoresInativos} inativos</p>
                         </div>
                       </div>
@@ -138,7 +160,7 @@ const Dashboard = () => {
                             <XAxis dataKey="name" hide />
                             <Tooltip 
                               cursor={{ fill: 'transparent' }}
-                              contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)' }}
+                              contentStyle={tooltipStyle}
                             />
                             <Bar dataKey="value" radius={[4, 4, 0, 0]} barSize={40}>
                               {statusChartData.map((entry, index) => (
@@ -153,15 +175,15 @@ const Dashboard = () => {
                 )}
 
                 {(!configs || configs.enabled_cards?.orgaos) && (
-                  <Card className="card-institutional border-t-4 border-t-[#C51B29] shadow-md">
+                  <Card className="bg-slate-800/50 border-slate-700 border-t-4 border-t-secondary shadow-lg">
                     <CardHeader className="flex flex-row items-center justify-between pb-2">
-                      <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-tight">Órgãos Cadastrados</CardTitle>
-                      <div className="rounded-lg p-2 bg-[#C51B29]/5">
-                        <Building2 className="h-4 w-4 text-[#C51B29]" />
+                      <CardTitle className="text-sm font-medium text-slate-400 uppercase tracking-tight">Órgãos Cadastrados</CardTitle>
+                      <div className="rounded-lg p-2 bg-secondary/10">
+                        <Building2 className="h-4 w-4 text-secondary" />
                       </div>
                     </CardHeader>
                     <CardContent>
-                      <div className="text-3xl font-bold text-[#0B132B] mb-4">{orgaos.length}</div>
+                      <div className="text-3xl font-bold text-slate-100 mb-4">{orgaos.length}</div>
                       <div className="h-[100px] w-full">
                         <ResponsiveContainer width="100%" height="100%">
                           <BarChart data={orgaosChartData} layout="vertical">
@@ -169,43 +191,48 @@ const Dashboard = () => {
                             <YAxis dataKey="name" type="category" hide />
                             <Tooltip 
                               cursor={{ fill: 'transparent' }}
-                              contentStyle={{ fontSize: '10px', borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)' }}
+                              contentStyle={tooltipStyle}
                             />
-                            <Bar dataKey="total" fill="#C51B29" radius={[0, 4, 4, 0]} barSize={12} />
+                            <Bar dataKey="total" radius={[0, 4, 4, 0]} barSize={12}>
+                               {orgaosChartData.map((entry, index) => (
+                                 <Cell key={`cell-${index}`} fill={entry.fill} />
+                               ))}
+                            </Bar>
                           </BarChart>
                         </ResponsiveContainer>
-                        <p className="text-[9px] text-center text-slate-400 mt-2 font-bold uppercase tracking-widest">Top 5 Órgãos / Lotação</p>
+                        <p className="text-[9px] text-center text-slate-500 mt-2 font-bold uppercase tracking-widest">Top 5 Órgãos / Lotação</p>
                       </div>
                     </CardContent>
                   </Card>
                 )}
 
                 {(!configs || configs.enabled_cards?.pontos) && (
-                  <Card className="card-institutional border-t-4 border-t-[#0B132B] shadow-md">
+                  <Card className="bg-slate-800/50 border-slate-700 border-t-4 border-t-success shadow-lg">
                     <CardHeader className="flex flex-row items-center justify-between pb-2">
-                      <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-tight">Pontos Registrados Hoje</CardTitle>
-                      <div className="rounded-lg p-2 bg-slate-100">
-                        <Timer className="h-4 w-4 text-[#0B132B]" />
+                      <CardTitle className="text-sm font-medium text-slate-400 uppercase tracking-tight">Pontos Registrados Hoje</CardTitle>
+                      <div className="rounded-lg p-2 bg-success/10">
+                        <Timer className="h-4 w-4 text-success" />
                       </div>
                     </CardHeader>
                     <CardContent>
                       <div className="flex items-end justify-between mb-4">
                         <div>
-                          <div className="text-3xl font-bold text-[#0B132B]">{registrosHoje.length}</div>
+                          <div className="text-3xl font-bold text-slate-100">{registrosHoje.length}</div>
                           <p className="text-[10px] text-slate-500 mt-1 uppercase font-bold tracking-wider">{colaboradoresComPonto} colaborador(es)</p>
                         </div>
                       </div>
                       <div className="h-[100px] w-full">
                         <ResponsiveContainer width="100%" height="100%">
                           <BarChart data={registrosEvolucaoData}>
-                            <XAxis dataKey="hora" fontSize={9} axisLine={false} tickLine={false} />
+                            <XAxis dataKey="hora" fontSize={9} axisLine={false} tickLine={false} tick={{ fill: COLORS.muted }} />
+                            <YAxis fontSize={9} axisLine={false} tickLine={false} tick={{ fill: COLORS.muted }} />
                             <Tooltip 
-                              cursor={{ fill: 'rgba(197, 27, 41, 0.05)' }}
-                              contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)' }}
+                              cursor={{ fill: 'rgba(59, 130, 246, 0.1)' }}
+                              contentStyle={tooltipStyle}
                             />
                             <Bar dataKey="total" radius={[4, 4, 0, 0]}>
                                {registrosEvolucaoData.map((entry, index) => (
-                                 <Cell key={`cell-${index}`} fill={index % 2 === 0 ? "#C51B29" : "#0B132B"} />
+                                 <Cell key={`cell-${index}`} fill={index % 2 === 0 ? COLORS.primary : COLORS.secondary} />
                                ))}
                             </Bar>
                           </BarChart>
@@ -219,48 +246,48 @@ const Dashboard = () => {
               {/* Quick Links */}
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 pt-4">
                 <Link to="/registro-ponto">
-                  <Card className="card-institutional hover:border-[#C51B29]/30 hover:shadow-lg transition-all cursor-pointer group border-slate-200">
+                  <Card className="bg-slate-800/50 border-slate-700 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 transition-all cursor-pointer group">
                     <CardHeader className="pb-2">
-                      <CardTitle className="flex items-center gap-2 text-base text-[#0B132B]">
-                        <Clock className="h-5 w-5 text-[#C51B29]" />
+                      <CardTitle className="flex items-center gap-2 text-base text-slate-100">
+                        <Clock className="h-5 w-5 text-primary" />
                         Registro de Ponto
                       </CardTitle>
-                      <CardDescription className="text-xs">Registrar ponto de colaboradores</CardDescription>
+                      <CardDescription className="text-xs text-slate-400">Registrar ponto de colaboradores</CardDescription>
                     </CardHeader>
                     <CardContent>
-                      <span className="text-[11px] font-bold uppercase tracking-widest text-[#C51B29] group-hover:opacity-80 inline-flex items-center gap-1 transition-all">
+                      <span className="text-[11px] font-bold uppercase tracking-widest text-primary group-hover:opacity-80 inline-flex items-center gap-1 transition-all">
                         Acessar <ArrowRight className="h-3 w-3 translate-x-0 group-hover:translate-x-1 transition-transform" />
                       </span>
                     </CardContent>
                   </Card>
                 </Link>
                 <Link to="/gerenciar-pontos">
-                  <Card className="card-institutional hover:border-[#C51B29]/30 hover:shadow-lg transition-all cursor-pointer group border-slate-200">
+                  <Card className="bg-slate-800/50 border-slate-700 hover:border-secondary/30 hover:shadow-lg hover:shadow-secondary/5 transition-all cursor-pointer group">
                     <CardHeader className="pb-2">
-                      <CardTitle className="flex items-center gap-2 text-base text-[#0B132B]">
-                        <ClipboardList className="h-5 w-5 text-[#C51B29]" />
+                      <CardTitle className="flex items-center gap-2 text-base text-slate-100">
+                        <ClipboardList className="h-5 w-5 text-secondary" />
                         Relatórios de Ponto
                       </CardTitle>
-                      <CardDescription className="text-xs">Visualizar e exportar registros</CardDescription>
+                      <CardDescription className="text-xs text-slate-400">Visualizar e exportar registros</CardDescription>
                     </CardHeader>
                     <CardContent>
-                      <span className="text-[11px] font-bold uppercase tracking-widest text-[#C51B29] group-hover:opacity-80 inline-flex items-center gap-1 transition-all">
+                      <span className="text-[11px] font-bold uppercase tracking-widest text-secondary group-hover:opacity-80 inline-flex items-center gap-1 transition-all">
                         Acessar <ArrowRight className="h-3 w-3 translate-x-0 group-hover:translate-x-1 transition-transform" />
                       </span>
                     </CardContent>
                   </Card>
                 </Link>
                 <Link to="/colaboradores">
-                  <Card className="card-institutional hover:border-[#C51B29]/30 hover:shadow-lg transition-all cursor-pointer group border-slate-200">
+                  <Card className="bg-slate-800/50 border-slate-700 hover:border-success/30 hover:shadow-lg hover:shadow-success/5 transition-all cursor-pointer group">
                     <CardHeader className="pb-2">
-                      <CardTitle className="flex items-center gap-2 text-base text-[#0B132B]">
-                        <Users className="h-5 w-5 text-[#C51B29]" />
+                      <CardTitle className="flex items-center gap-2 text-base text-slate-100">
+                        <Users className="h-5 w-5 text-success" />
                         Colaboradores
                       </CardTitle>
-                      <CardDescription className="text-xs">Gerenciar base de servidores</CardDescription>
+                      <CardDescription className="text-xs text-slate-400">Gerenciar base de servidores</CardDescription>
                     </CardHeader>
                     <CardContent>
-                      <span className="text-[11px] font-bold uppercase tracking-widest text-[#C51B29] group-hover:opacity-80 inline-flex items-center gap-1 transition-all">
+                      <span className="text-[11px] font-bold uppercase tracking-widest text-success group-hover:opacity-80 inline-flex items-center gap-1 transition-all">
                         Acessar <ArrowRight className="h-3 w-3 translate-x-0 group-hover:translate-x-1 transition-transform" />
                       </span>
                     </CardContent>
@@ -268,16 +295,16 @@ const Dashboard = () => {
                 </Link>
                 {isSuperAdmin && (
                   <Link to="/admin/dashboard-config">
-                    <Card className="card-institutional hover:border-[#F2C811]/30 hover:shadow-lg transition-all cursor-pointer group border-slate-200 bg-slate-50/50">
+                    <Card className="bg-slate-800/50 border-slate-700 hover:border-warning/30 hover:shadow-lg hover:shadow-warning/5 transition-all cursor-pointer group">
                       <CardHeader className="pb-2">
-                        <CardTitle className="flex items-center gap-2 text-base text-[#0B132B]">
-                          <UserCog className="h-5 w-5 text-[#0B132B]" />
+                        <CardTitle className="flex items-center gap-2 text-base text-slate-100">
+                          <UserCog className="h-5 w-5 text-warning" />
                           Configurações
                         </CardTitle>
-                        <CardDescription className="text-xs">Ajustar painel e Power BI</CardDescription>
+                        <CardDescription className="text-xs text-slate-400">Ajustar painel e Power BI</CardDescription>
                       </CardHeader>
                       <CardContent>
-                        <span className="text-[11px] font-bold uppercase tracking-widest text-[#0B132B] group-hover:opacity-80 inline-flex items-center gap-1 transition-all">
+                        <span className="text-[11px] font-bold uppercase tracking-widest text-warning group-hover:opacity-80 inline-flex items-center gap-1 transition-all">
                           Acessar <ArrowRight className="h-3 w-3 translate-x-0 group-hover:translate-x-1 transition-transform" />
                         </span>
                       </CardContent>
@@ -301,14 +328,14 @@ const Dashboard = () => {
         {/* Regular user: redirect to registro de ponto */}
         {!isAdmin && !isGestor && (
           <div className="max-w-lg mx-auto text-center py-12 md:py-20 lg:py-32">
-            <div className="h-20 w-20 rounded-2xl bg-[#0B132B]/5 flex items-center justify-center mx-auto mb-6 shadow-sm">
-              <Clock className="h-10 w-10 text-[#C51B29]" />
+            <div className="h-20 w-20 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-6 shadow-lg">
+              <Clock className="h-10 w-10 text-primary" />
             </div>
-            <h2 className="text-2xl font-bold text-[#0B132B] mb-2 uppercase tracking-tight">Registro de Ponto Digital</h2>
-            <p className="text-slate-500 mb-8 max-w-sm mx-auto">
-              Bem-vindo ao sistema oficial do PROCON MA. Acesse a página de registro para bater seu ponto.
+            <h2 className="text-2xl font-bold text-slate-100 mb-2 uppercase tracking-tight">Registro de Ponto Digital</h2>
+            <p className="text-slate-400 mb-8 max-w-sm mx-auto">
+              Bem-vindo ao sistema oficial do SIF SAÚDE E PERFORMANCE. Acesse a página de registro para bater seu ponto.
             </p>
-            <Button asChild size="lg" className="bg-[#C51B29] hover:bg-[#A01622] text-white px-8 h-12 shadow-md shadow-red-900/10">
+            <Button asChild size="lg" className="bg-primary hover:bg-primary/90 text-white px-8 h-12 shadow-lg shadow-primary/20">
               <Link to="/registro-ponto">Ir para Registro de Ponto</Link>
             </Button>
           </div>

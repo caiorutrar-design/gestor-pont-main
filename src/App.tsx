@@ -23,6 +23,8 @@ const DossieColaborador = lazy(() => import("./pages/DossieColaborador"));
 const MeuPonto = lazy(() => import("./pages/MeuPonto"));
 const Login = lazy(() => import("./pages/Login"));
 const Cadastro = lazy(() => import("./pages/Cadastro"));
+const GestaoFinanceira = lazy(() => import("./pages/GestaoFinanceira"));
+const LandingPage = lazy(() => import("./pages/LandingPage"));
 const DashboardConfig = lazy(() => import("./pages/DashboardConfig"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
@@ -53,6 +55,9 @@ const App = () => (
               {/* Super Admin only */}
               <Route path="/gerenciar-usuarios" element={<SuperAdminRoute><GerenciamentoUsuarios /></SuperAdminRoute>} />
               <Route path="/admin/dashboard-config" element={<SuperAdminRoute><DashboardConfig /></SuperAdminRoute>} />
+              <Route path="/financeiro" element={<SuperAdminRoute><GestaoFinanceira /></SuperAdminRoute>} />
+              <Route path="/planos" element={<LandingPage />} />
+              <Route path="/precos" element={<LandingPage />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </Suspense>
