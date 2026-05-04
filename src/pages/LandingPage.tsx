@@ -13,7 +13,7 @@ interface Planos {
 const planos: Planos = {
   starter: {
     nome: "Starter",
-    preco: 79,
+    preco: 49,
     usuarios: "Até 10",
     recursos: [
       "Registro de ponto ilimitado",
@@ -26,7 +26,7 @@ const planos: Planos = {
   },
   business: {
     nome: "Business",
-    preco: 199,
+    preco: 149,
     usuarios: "Até 50",
     recursos: [
       "Tudo do Starter",
@@ -39,7 +39,7 @@ const planos: Planos = {
   },
   enterprise: {
     nome: "Enterprise",
-    preco: 399,
+    preco: 299,
     usuarios: "Ilimitado",
     recursos: [
       "Tudo do Business",
@@ -151,7 +151,7 @@ export default function LandingPage() {
                   "Geolocalização automática",
                   "Relatórios em 1 clique",
                   "100% compliant com legislação",
-                  "A partir de R$ 79/mês"
+                  "A partir de R$ 49/mês"
                 ].map((item, i) => (
                   <li key={i} className="flex items-start gap-3">
                     <span className="text-success mt-1">✓</span>

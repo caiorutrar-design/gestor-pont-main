@@ -102,11 +102,11 @@ export default function GestaoFinanceira() {
 
   const getValorPlano = (plano: string) => {
     const valores: Record<string, number> = {
-      starter: 79,
-      business: 199,
-      enterprise: 399
+      starter: 49,
+      business: 149,
+      enterprise: 299
     };
-    return valores[plano] || 79;
+    return valores[plano] || 49;
   };
 
   const getStatusBadge = (empresa: EmpresaCliente) => {
