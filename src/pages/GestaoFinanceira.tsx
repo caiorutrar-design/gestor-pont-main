@@ -387,19 +387,19 @@ export default function GestaoFinanceira() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="p-4 bg-secondary rounded-lg border border-border">
             <div className="text-sm text-muted-foreground mb-1">Básico</div>
-            <div className="text-3xl font-bold mb-2">R$ 79<span className="text-sm font-normal">/mês</span></div>
+            <div className="text-3xl font-bold mb-2">R$ 49<span className="text-sm font-normal">/mês</span></div>
             <div className="text-sm text-muted-foreground">Até 10 colaboradores</div>
           </div>
           
           <div className="p-4 bg-secondary rounded-lg border border-primary">
             <div className="text-sm text-muted-foreground mb-1">Profissional</div>
-            <div className="text-3xl font-bold mb-2 text-primary">R$ 199<span className="text-sm font-normal">/mês</span></div>
+            <div className="text-3xl font-bold mb-2 text-primary">R$ 149<span className="text-sm font-normal">/mês</span></div>
             <div className="text-sm text-muted-foreground">Até 50 colaboradores</div>
           </div>
           
           <div className="p-4 bg-secondary rounded-lg border border-warning">
             <div className="text-sm text-muted-foreground mb-1">Enterprise</div>
-            <div className="text-3xl font-bold mb-2 text-warning">R$ 399<span className="text-sm font-normal">/mês</span></div>
+            <div className="text-3xl font-bold mb-2 text-warning">R$ 299<span className="text-sm font-normal">/mês</span></div>
             <div className="text-sm text-muted-foreground">Colaboradores ilimitados</div>
           </div>
         </div>
